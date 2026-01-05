@@ -15,6 +15,9 @@ from pathlib import Path
 from openai import OpenAI
 from dotenv import load_dotenv
 
+# Константы
+MAX_FILENAME_LENGTH = 100
+
 
 def read_file(filepath: str) -> str:
     """Читает содержимое файла."""
@@ -48,7 +51,9 @@ def generate_explanation(client: OpenAI, system_prompt: str, topic: str) -> str:
             temperature=0.7,
             max_tokens=2000
         )
-        return response.choices[0].message.content
+        if response.choices and len(response.choices) > 0:
+            return response.choices[0].message.content
+        return None
     except Exception as e:
         print(f"Ошибка при генерации объяснения для темы '{topic}': {e}")
         return None
@@ -61,8 +66,8 @@ def sanitize_filename(topic: str) -> str:
     safe_name = safe_name.replace('?', '_').replace('*', '_').replace('"', '_')
     safe_name = safe_name.replace('<', '_').replace('>', '_').replace('|', '_')
     # Ограничиваем длину имени файла
-    if len(safe_name) > 100:
-        safe_name = safe_name[:100]
+    if len(safe_name) > MAX_FILENAME_LENGTH:
+        safe_name = safe_name[:MAX_FILENAME_LENGTH]
     return safe_name
 
 

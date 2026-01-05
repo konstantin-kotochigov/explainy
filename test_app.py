@@ -9,7 +9,7 @@ from pathlib import Path
 # Добавляем путь к модулю
 sys.path.insert(0, str(Path(__file__).parent))
 
-from main import read_file, read_topics, sanitize_filename
+from main import read_file, read_topics, sanitize_filename, MAX_FILENAME_LENGTH
 
 
 def test_read_system_prompt():
@@ -48,7 +48,7 @@ def test_sanitize_filename():
         ("Обычная тема", "Обычная тема"),
         ("Тема/с/слешами", "Тема_с_слешами"),
         ("Тема:с:двоеточиями", "Тема_с_двоеточиями"),
-        ("?" * 150, "_" * 100),  # Проверка ограничения длины
+        ("?" * 150, "_" * MAX_FILENAME_LENGTH),  # Проверка ограничения длины
     ]
     
     all_passed = True
