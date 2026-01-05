@@ -43,15 +43,15 @@ def generate_explanation(client: OpenAI, system_prompt: str, topic: str) -> str:
     """Генерирует объяснение темы используя OpenAI API."""
     try:
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-5-mini",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Объясни следующую тему: {topic}"}
             ],
-            temperature=0.7,
-            max_tokens=2000
+            service_tier="flex"
         )
         if response.choices and len(response.choices) > 0:
+            print("total tokens processed = {}".format(response.usage.total_tokens)
             return response.choices[0].message.content
         return None
     except Exception as e:
@@ -99,7 +99,7 @@ def main():
         sys.exit(1)
     
     # Инициализируем клиент OpenAI
-    client = OpenAI(api_key=api_key)
+    client = OpenAI(api_key=api_key, timeout=900.0)
     
     # Читаем системный промпт
     print("Читаем системный промпт...")
