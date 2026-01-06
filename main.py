@@ -43,15 +43,15 @@ def generate_explanation(client: OpenAI, system_prompt: str, topic: str) -> str:
     """Генерирует объяснение темы используя OpenAI API."""
     try:
         response = client.chat.completions.create(
-            model="gpt-5-mini",
+            model="gemini-2.5-flash",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Объясни следующую тему: {topic}"}
             ],
-            service_tier="flex"
+            # service_tier="flex"
         )
         if response.choices and len(response.choices) > 0:
-            print("total tokens processed = {}".format(response.usage.total_tokens)
+            print("total tokens processed = {}".format(response.usage.total_tokens))
             return response.choices[0].message.content
         return None
     except Exception as e:
@@ -92,14 +92,14 @@ def main():
     load_dotenv()
     
     # Проверяем наличие API ключа
-    api_key = os.getenv('OPENAI_API_KEY')
+    api_key = os.getenv('GOOGLE_API_KEY')
     if not api_key:
         print("Ошибка: не установлена переменная окружения OPENAI_API_KEY")
         print("Создайте файл .env и добавьте в него: OPENAI_API_KEY=ваш_ключ")
         sys.exit(1)
     
     # Инициализируем клиент OpenAI
-    client = OpenAI(api_key=api_key, timeout=900.0)
+    client = OpenAI(api_key=api_key, base_url="https://generativelanguage.googleapis.com/v1beta/openai/", timeout=900.0)
     
     # Читаем системный промпт
     print("Читаем системный промпт...")
