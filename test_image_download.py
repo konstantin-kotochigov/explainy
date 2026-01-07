@@ -102,8 +102,8 @@ def test_download_images_with_mock_api():
                     
                     print(f"  ✓ Директория создана: {result}")
                     
-                    # Проверяем наличие файлов изображений
-                    img_files = list(result_path.glob("img*.png"))
+                    # Проверяем наличие файлов изображений (любое расширение)
+                    img_files = list(result_path.glob("img*"))
                     if len(img_files) == 0:
                         print("  ✗ Файлы изображений не созданы")
                         return False

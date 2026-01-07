@@ -74,7 +74,7 @@ def sanitize_filename(topic: str) -> str:
     return safe_name
 
 
-def download_images(topic: str) -> str:
+def download_images(topic: str) -> str | None:
     """
     Загружает изображения для темы используя Google Custom Search API.
     
@@ -127,8 +127,16 @@ def download_images(topic: str) -> str:
                 img_response = requests.get(img_url, timeout=10, stream=True)
                 img_response.raise_for_status()
                 
+                # Определяем расширение файла из URL или Content-Type
+                file_ext = '.png'  # По умолчанию
+                if '.' in img_url.split('/')[-1]:
+                    url_ext = '.' + img_url.split('.')[-1].split('?')[0].lower()
+                    # Проверяем, что это известное расширение изображения
+                    if url_ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp']:
+                        file_ext = url_ext
+                
                 # Сохраняем изображение
-                img_path = img_dir / f"img{i}.png"
+                img_path = img_dir / f"img{i}{file_ext}"
                 with open(img_path, 'wb') as f:
                     for chunk in img_response.iter_content(chunk_size=8192):
                         f.write(chunk)
@@ -151,7 +159,6 @@ def download_images(topic: str) -> str:
     except Exception as e:
         print(f"  ⚠ Неожиданная ошибка при загрузке изображений: {e}")
         return None
-
 
 
 def save_explanation(output_dir: Path, topic: str, explanation: str, index: int):
@@ -213,6 +220,7 @@ def main():
         print(f"\n[{i}/{len(topics)}] Генерируем объяснение для: {topic}")
         
         # Загружаем изображения для темы
+        # TODO: В будущем можно использовать img_dir для встраивания изображений в notebook
         img_dir = download_images(topic)
         
         explanation = generate_explanation(client, system_prompt, topic)
