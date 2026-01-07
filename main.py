@@ -18,9 +18,6 @@ import nbformat
 from nbformat.v4 import new_notebook, new_markdown_cell
 import requests
 
-# Константы
-MAX_FILENAME_LENGTH = 100
-
 
 def read_file(filepath: str) -> str:
     """Читает содержимое файла."""
@@ -35,10 +32,33 @@ def read_file(filepath: str) -> str:
         sys.exit(1)
 
 
-def read_topics(filepath: str) -> list[str]:
-    """Читает список тем из файла, возвращает список непустых строк."""
+def read_topics(filepath: str) -> list[dict]:
+    """
+    Читает список тем из файла в новом формате.
+    
+    Формат: code;detailed_query;image_query
+    
+    Returns:
+        Список словарей с ключами: code, detailed_query, image_query
+    """
     content = read_file(filepath)
-    topics = [line.strip() for line in content.split('\n') if line.strip()]
+    topics = []
+    for line in content.split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        
+        parts = line.split(';')
+        if len(parts) != 3:
+            print(f"Предупреждение: неверный формат строки (ожидается 3 поля): {line}")
+            continue
+        
+        topics.append({
+            'code': parts[0].strip(),
+            'detailed_query': parts[1].strip(),
+            'image_query': parts[2].strip()
+        })
+    
     return topics
 
 
@@ -62,24 +82,13 @@ def generate_explanation(client: OpenAI, system_prompt: str, topic: str) -> str:
         return None
 
 
-def sanitize_filename(topic: str) -> str:
-    """Создает безопасное имя файла из темы."""
-    # Заменяем небезопасные символы на подчеркивания
-    safe_name = topic.replace('/', '_').replace('\\', '_').replace(':', '_')
-    safe_name = safe_name.replace('?', '_').replace('*', '_').replace('"', '_')
-    safe_name = safe_name.replace('<', '_').replace('>', '_').replace('|', '_')
-    # Ограничиваем длину имени файла
-    if len(safe_name) > MAX_FILENAME_LENGTH:
-        safe_name = safe_name[:MAX_FILENAME_LENGTH]
-    return safe_name
-
-
-def download_images(topic: str) -> str | None:
+def download_images(code: str, image_query: str) -> str | None:
     """
-    Загружает изображения для темы используя Google Custom Search API.
+    Загружает изображения используя Google Custom Search API.
     
     Args:
-        topic: Тема для поиска изображений
+        code: Кодовое имя темы для создания директории
+        image_query: Поисковый запрос на английском для API поиска изображений
         
     Returns:
         Путь к директории с загруженными изображениями или None в случае ошибки
@@ -98,12 +107,13 @@ def download_images(topic: str) -> str | None:
         params = {
             'key': api_key,
             'cx': search_engine_id,
-            'q': f"{topic} imagesize:large",
+            'q': image_query,
             'searchType': 'image',
+            'imgSize': 'large',  # Фильтр по размеру изображений
             'num': 10  # Максимум 10 изображений за запрос
         }
         
-        print(f"  Поиск изображений для темы: {topic}")
+        print(f"  Поиск изображений по запросу: {image_query}")
         response = requests.get(url, params=params, timeout=30)
         response.raise_for_status()
         
@@ -114,9 +124,8 @@ def download_images(topic: str) -> str | None:
             print("  ⚠ Изображения не найдены")
             return None
         
-        # Создаем директорию для изображений
-        safe_topic_name = sanitize_filename(topic)
-        img_dir = Path('img') / safe_topic_name
+        # Создаем директорию для изображений по кодовому имени
+        img_dir = Path('img') / code
         img_dir.mkdir(parents=True, exist_ok=True)
         
         # Загружаем изображения
@@ -161,9 +170,9 @@ def download_images(topic: str) -> str | None:
         return None
 
 
-def save_explanation(output_dir: Path, topic: str, explanation: str, index: int):
+def save_explanation(output_dir: Path, code: str, explanation: str, index: int):
     """Сохраняет объяснение в Jupyter Notebook."""
-    filename = f"{index:02d}_{sanitize_filename(topic)}.ipynb"
+    filename = f"{index:02d}_{code}.ipynb"
     filepath = output_dir / filename
     
     try:
@@ -216,19 +225,22 @@ def main():
     print(f"\nГенерация объяснений для {len(topics)} тем:")
     print("-" * 80)
     
-    for i, topic in enumerate(topics, start=1):
-        print(f"\n[{i}/{len(topics)}] Генерируем объяснение для: {topic}")
+    for i, topic_data in enumerate(topics, start=1):
+        code = topic_data['code']
+        detailed_query = topic_data['detailed_query']
+        image_query = topic_data['image_query']
         
-        # Загружаем изображения для темы
-        # TODO: В будущем можно использовать img_dir для встраивания изображений в notebook
-        img_dir = download_images(topic)
+        print(f"\n[{i}/{len(topics)}] Генерируем объяснение для: {detailed_query}")
         
-        explanation = generate_explanation(client, system_prompt, topic)
+        # Загружаем изображения для темы, используя кодовое имя и запрос на английском
+        img_dir = download_images(code, image_query)
+        
+        explanation = generate_explanation(client, system_prompt, detailed_query)
         
         if explanation:
-            save_explanation(output_dir, topic, explanation, i)
+            save_explanation(output_dir, code, explanation, i)
         else:
-            print(f"✗ Не удалось сгенерировать объяснение для темы: {topic}")
+            print(f"✗ Не удалось сгенерировать объяснение для темы: {detailed_query}")
     
     print("\n" + "=" * 80)
     print(f"✓ Завершено! Обработано тем: {len(topics)}")

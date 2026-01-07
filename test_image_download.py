@@ -13,7 +13,7 @@ import os
 # Добавляем путь к модулю
 sys.path.insert(0, str(Path(__file__).parent))
 
-from main import download_images, sanitize_filename
+from main import download_images
 
 
 def test_download_images_without_api_keys():
@@ -30,7 +30,7 @@ def test_download_images_without_api_keys():
         del os.environ['GOOGLE_SEARCH_ENGINE_ID']
     
     try:
-        result = download_images("test topic")
+        result = download_images("test_code", "test query")
         
         if result is None:
             print("  ✓ Функция корректно возвращает None при отсутствии API ключей")
@@ -88,7 +88,7 @@ def test_download_images_with_mock_api():
                     mock_get.side_effect = side_effect
                     
                     # Вызываем функцию
-                    result = download_images("machine learning")
+                    result = download_images("ml", "machine learning")
                     
                     # Проверяем результат
                     if result is None:
@@ -157,16 +157,16 @@ def test_download_images_directory_structure():
                     
                     mock_get.side_effect = side_effect
                     
-                    # Тестируем тему с небезопасными символами
-                    topic = "Методы/информационного:поиска"
-                    result = download_images(topic)
+                    # Тестируем с кодовым именем
+                    code = "test_code"
+                    image_query = "information retrieval diagram"
+                    result = download_images(code, image_query)
                     
                     if result is None:
                         print("  ✗ Функция вернула None")
                         return False
                     
-                    expected_dir_name = sanitize_filename(topic)
-                    expected_path = Path('img') / expected_dir_name
+                    expected_path = Path('img') / code
                     
                     if str(expected_path) != result:
                         print(f"  ✗ Неверный путь. Ожидалось: {expected_path}, получено: {result}")
