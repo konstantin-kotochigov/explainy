@@ -61,8 +61,10 @@ def test_notebook_generation():
             print(f"  ✓ Первая ячейка - Markdown")
             
             # Проверяем, что содержимое совпадает
-            if explanation not in first_cell.source:
+            if first_cell.source != explanation:
                 print(f"  ✗ Содержимое ячейки не совпадает с ожидаемым")
+                print(f"  Ожидалось: {explanation[:50]}...")
+                print(f"  Получено: {first_cell.source[:50]}...")
                 return False
             
             print(f"  ✓ Содержимое ячейки совпадает с ожидаемым")

@@ -102,8 +102,8 @@ def main():
     # Проверяем наличие API ключа
     api_key = os.getenv('GOOGLE_API_KEY')
     if not api_key:
-        print("Ошибка: не установлена переменная окружения OPENAI_API_KEY")
-        print("Создайте файл .env и добавьте в него: OPENAI_API_KEY=ваш_ключ")
+        print("Ошибка: не установлена переменная окружения GOOGLE_API_KEY")
+        print("Создайте файл .env и добавьте в него: GOOGLE_API_KEY=ваш_ключ")
         sys.exit(1)
     
     # Инициализируем клиент OpenAI
