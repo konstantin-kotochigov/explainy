@@ -9,7 +9,7 @@ from pathlib import Path
 # Добавляем путь к модулю
 sys.path.insert(0, str(Path(__file__).parent))
 
-from main import read_file, read_topics, sanitize_filename, MAX_FILENAME_LENGTH
+from main import read_file, read_topics
 
 
 def test_read_system_prompt():
@@ -27,45 +27,29 @@ def test_read_system_prompt():
 
 
 def test_read_topics():
-    """Тест чтения списка тем."""
+    """Тест чтения списка тем в новом формате."""
     print("\nТест 2: Чтение topics.txt")
     try:
         topics = read_topics('topics.txt')
         assert len(topics) > 0, "Список тем пустой"
+        assert all(isinstance(t, dict) for t in topics), "Темы должны быть словарями"
+        assert all('code' in t and 'detailed_query' in t and 'image_query' in t for t in topics), \
+            "Каждая тема должна содержать поля: code, detailed_query, image_query"
+        
         print(f"  ✓ Загружено {len(topics)} тем:")
-        for i, topic in enumerate(topics, 1):
-            print(f"    {i}. {topic[:60]}{'...' if len(topic) > 60 else ''}")
+        for i, topic in enumerate(topics[:3], 1):  # Показываем первые 3 темы
+            print(f"    {i}. Код: {topic['code']}, Запрос: {topic['detailed_query'][:50]}...")
+        if len(topics) > 3:
+            print(f"    ... и еще {len(topics) - 3} тем")
     except Exception as e:
         print(f"  ✗ Ошибка: {e}")
         return False
     return True
 
 
-def test_sanitize_filename():
-    """Тест очистки имени файла."""
-    print("\nТест 3: Проверка sanitize_filename()")
-    test_cases = [
-        ("Обычная тема", "Обычная тема"),
-        ("Тема/с/слешами", "Тема_с_слешами"),
-        ("Тема:с:двоеточиями", "Тема_с_двоеточиями"),
-        ("?" * 150, "_" * MAX_FILENAME_LENGTH),  # Проверка ограничения длины
-    ]
-    
-    all_passed = True
-    for input_text, expected_pattern in test_cases:
-        result = sanitize_filename(input_text)
-        if "/" not in result and "\\" not in result and ":" not in result:
-            print(f"  ✓ '{input_text[:40]}...' -> '{result[:40]}...'")
-        else:
-            print(f"  ✗ Небезопасные символы остались в: {result}")
-            all_passed = False
-    
-    return all_passed
-
-
 def test_output_directory():
     """Тест создания выходной директории."""
-    print("\nТест 4: Проверка создания директории outputs")
+    print("\nТест 3: Проверка создания директории outputs")
     try:
         output_dir = Path('outputs')
         output_dir.mkdir(exist_ok=True)
@@ -87,7 +71,6 @@ def main():
     tests = [
         test_read_system_prompt,
         test_read_topics,
-        test_sanitize_filename,
         test_output_directory,
     ]
     

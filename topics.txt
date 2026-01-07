@@ -1,24 +1,24 @@
-Методы информационного поиска / метод Pseudo-Relevance Feedback (PRF)
-Методы информационного поиска / метод REALM
-Методы информационного поиска / метод Deep Passage Retrieval (DPR))
-Методы информационного поиска / метод ColBERT (2020)
-Методы информационного поиска / метод DPR-CTL (2020)
-Методы информационного поиска / метод RAG (2020)
-Методы информационного поиска / метод ExaRanker (2023)¶
-Методы информационного поиска / метод CONQRR (2022)
-Методы информационного поиска / метод Contextual Clues Sampling (2022)
-Методы информационного поиска / метод DeepRetrieval (2025)
-Методы информационного поиска / метод Search-R1 (2025)
-Методы информационного поиска / метод S3
-Методы информационного поиска / метод GraphRAG (2024)
-Методы информационного поиска / метод LightRAG (2024)
-Методы информационного поиска / метод PathRAG (2025)
-Методы информационного поиска / метод SPLADE (2021)
-Методы информационного поиска / метод SPLADE++ (2021)
-Методы информационного поиска / метод COIL (2021)
-Методы информационного поиска / метод uniCOIL (2022)
-Методы информационного поиска / метод DeepImpact
-Методы информационного поиска / метод DeepCT
-Методы информационного поиска / метод TILDE
-Методы информационного поиска / метод Doc2Query (2019)
-Методы информационного поиска / метод E5
+prf;Методы информационного поиска / метод Pseudo-Relevance Feedback (PRF);information retrieval Pseudo-Relevance Feedback PRF diagram
+realm;Методы информационного поиска / метод REALM;information retrieval REALM model architecture
+dpr;Методы информационного поиска / метод Deep Passage Retrieval (DPR);information retrieval Deep Passage Retrieval DPR diagram
+colbert;Методы информационного поиска / метод ColBERT (2020);information retrieval ColBERT architecture diagram
+dpr_ctl;Методы информационного поиска / метод DPR-CTL (2020);information retrieval DPR-CTL model
+rag;Методы информационного поиска / метод RAG (2020);information retrieval RAG Retrieval Augmented Generation
+exaranker;Методы информационного поиска / метод ExaRanker (2023);information retrieval ExaRanker model
+conqrr;Методы информационного поиска / метод CONQRR (2022);information retrieval CONQRR model
+contextual_clues;Методы информационного поиска / метод Contextual Clues Sampling (2022);information retrieval Contextual Clues Sampling
+deepretrieval;Методы информационного поиска / метод DeepRetrieval (2025);information retrieval DeepRetrieval model
+search_r1;Методы информационного поиска / метод Search-R1 (2025);information retrieval Search-R1 model
+s3;Методы информационного поиска / метод S3;information retrieval S3 model
+graphrag;Методы информационного поиска / метод GraphRAG (2024);information retrieval GraphRAG architecture
+lightrag;Методы информационного поиска / метод LightRAG (2024);information retrieval LightRAG model
+pathrag;Методы информационного поиска / метод PathRAG (2025);information retrieval PathRAG architecture
+splade;Методы информационного поиска / метод SPLADE (2021);information retrieval SPLADE model diagram
+splade_plus;Методы информационного поиска / метод SPLADE++ (2021);information retrieval SPLADE++ model
+coil;Методы информационного поиска / метод COIL (2021);information retrieval COIL model architecture
+unicoil;Методы информационного поиска / метод uniCOIL (2022);information retrieval uniCOIL model
+deepimpact;Методы информационного поиска / метод DeepImpact;information retrieval DeepImpact model
+deepct;Методы информационного поиска / метод DeepCT;information retrieval DeepCT model
+tilde;Методы информационного поиска / метод TILDE;information retrieval TILDE model architecture
+doc2query;Методы информационного поиска / метод Doc2Query (2019);information retrieval Doc2Query model
+e5;Методы информационного поиска / метод E5;information retrieval E5 embeddings model
