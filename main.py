@@ -6,7 +6,7 @@
 1. Читает список тем из файла topics.txt
 2. Читает системный промпт из файла system_prompt.txt
 3. Генерирует объяснение для каждой темы используя OpenAI API
-4. Сохраняет каждое объяснение в отдельный файл
+4. Сохраняет каждое объяснение в отдельный Jupyter Notebook (.ipynb)
 """
 
 import os
@@ -14,6 +14,8 @@ import sys
 from pathlib import Path
 from openai import OpenAI
 from dotenv import load_dotenv
+import nbformat
+from nbformat.v4 import new_notebook, new_markdown_cell
 
 # Константы
 MAX_FILENAME_LENGTH = 100
@@ -72,15 +74,21 @@ def sanitize_filename(topic: str) -> str:
 
 
 def save_explanation(output_dir: Path, topic: str, explanation: str, index: int):
-    """Сохраняет объяснение в файл."""
-    filename = f"{index:02d}_{sanitize_filename(topic)}.txt"
+    """Сохраняет объяснение в Jupyter Notebook."""
+    filename = f"{index:02d}_{sanitize_filename(topic)}.ipynb"
     filepath = output_dir / filename
     
     try:
+        # Создаем новый notebook
+        nb = new_notebook()
+        
+        # Добавляем одну Markdown ячейку с объяснением
+        nb.cells.append(new_markdown_cell(explanation))
+        
+        # Сохраняем notebook
         with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(f"Тема: {topic}\n")
-            f.write("=" * 80 + "\n\n")
-            f.write(explanation)
+            nbformat.write(nb, f)
+        
         print(f"✓ Сохранено: {filepath}")
     except Exception as e:
         print(f"Ошибка при сохранении файла {filepath}: {e}")
