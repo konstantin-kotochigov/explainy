@@ -16,6 +16,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import nbformat
 from nbformat.v4 import new_notebook, new_markdown_cell
+import requests
 
 # Константы
 MAX_FILENAME_LENGTH = 100
@@ -71,6 +72,93 @@ def sanitize_filename(topic: str) -> str:
     if len(safe_name) > MAX_FILENAME_LENGTH:
         safe_name = safe_name[:MAX_FILENAME_LENGTH]
     return safe_name
+
+
+def download_images(topic: str) -> str | None:
+    """
+    Загружает изображения для темы используя Google Custom Search API.
+    
+    Args:
+        topic: Тема для поиска изображений
+        
+    Returns:
+        Путь к директории с загруженными изображениями или None в случае ошибки
+    """
+    # Получаем API ключ и ID поискового движка из переменных окружения
+    api_key = os.getenv('GOOGLE_SEARCH_API_KEY')
+    search_engine_id = os.getenv('GOOGLE_SEARCH_ENGINE_ID')
+    
+    if not api_key or not search_engine_id:
+        print("  ⚠ Google Custom Search API не настроен (пропущены GOOGLE_SEARCH_API_KEY или GOOGLE_SEARCH_ENGINE_ID)")
+        return None
+    
+    try:
+        # Формируем запрос к Google Custom Search API
+        url = "https://www.googleapis.com/customsearch/v1"
+        params = {
+            'key': api_key,
+            'cx': search_engine_id,
+            'q': f"{topic} imagesize:large",
+            'searchType': 'image',
+            'num': 10  # Максимум 10 изображений за запрос
+        }
+        
+        print(f"  Поиск изображений для темы: {topic}")
+        response = requests.get(url, params=params, timeout=30)
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        # Проверяем наличие результатов
+        if 'items' not in data or len(data['items']) == 0:
+            print("  ⚠ Изображения не найдены")
+            return None
+        
+        # Создаем директорию для изображений
+        safe_topic_name = sanitize_filename(topic)
+        img_dir = Path('img') / safe_topic_name
+        img_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Загружаем изображения
+        downloaded_count = 0
+        for i, item in enumerate(data['items'], start=1):
+            try:
+                img_url = item['link']
+                img_response = requests.get(img_url, timeout=10, stream=True)
+                img_response.raise_for_status()
+                
+                # Определяем расширение файла из URL или Content-Type
+                file_ext = '.png'  # По умолчанию
+                if '.' in img_url.split('/')[-1]:
+                    url_ext = '.' + img_url.split('.')[-1].split('?')[0].lower()
+                    # Проверяем, что это известное расширение изображения
+                    if url_ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp']:
+                        file_ext = url_ext
+                
+                # Сохраняем изображение
+                img_path = img_dir / f"img{i}{file_ext}"
+                with open(img_path, 'wb') as f:
+                    for chunk in img_response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                
+                downloaded_count += 1
+            except Exception as e:
+                print(f"  ⚠ Не удалось загрузить изображение {i}: {e}")
+                continue
+        
+        if downloaded_count > 0:
+            print(f"  ✓ Загружено изображений: {downloaded_count} в {img_dir}")
+            return str(img_dir)
+        else:
+            print("  ⚠ Не удалось загрузить ни одного изображения")
+            return None
+            
+    except requests.exceptions.RequestException as e:
+        print(f"  ⚠ Ошибка при запросе к Google Custom Search API: {e}")
+        return None
+    except Exception as e:
+        print(f"  ⚠ Неожиданная ошибка при загрузке изображений: {e}")
+        return None
 
 
 def save_explanation(output_dir: Path, topic: str, explanation: str, index: int):
@@ -130,6 +218,10 @@ def main():
     
     for i, topic in enumerate(topics, start=1):
         print(f"\n[{i}/{len(topics)}] Генерируем объяснение для: {topic}")
+        
+        # Загружаем изображения для темы
+        # TODO: В будущем можно использовать img_dir для встраивания изображений в notebook
+        img_dir = download_images(topic)
         
         explanation = generate_explanation(client, system_prompt, topic)
         
