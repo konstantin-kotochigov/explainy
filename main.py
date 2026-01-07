@@ -50,7 +50,7 @@ def read_topics(filepath: str) -> list[dict]:
         
         parts = line.split(';')
         if len(parts) != 3:
-            print(f"Предупреждение: неверный формат строки (ожидается 3 поля): {line}")
+            print(f"Предупреждение: неверный формат строки (ожидается 3 поля, получено {len(parts)})")
             continue
         
         topics.append({
