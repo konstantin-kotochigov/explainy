@@ -11,7 +11,7 @@ import nbformat
 # Добавляем путь к модулю
 sys.path.insert(0, str(Path(__file__).parent))
 
-from main import save_explanation, sanitize_filename
+from main import save_explanation
 
 
 def test_notebook_generation():
@@ -23,26 +23,26 @@ def test_notebook_generation():
         output_dir = Path(tmpdir)
         
         # Тестовые данные
-        topic = "Методы информационного поиска / метод DPR"
+        code = "dpr"
         explanation = "# DPR (2020)\n\nDeep Passage Retrieval - это метод для поиска релевантных документов."
         index = 1
         
         # Генерируем notebook
-        save_explanation(output_dir, topic, explanation, index)
+        filepath = save_explanation(output_dir, code, explanation, index)
         
         # Проверяем, что файл создан
-        expected_filename = f"{index:02d}_{sanitize_filename(topic)}.ipynb"
-        filepath = output_dir / expected_filename
+        expected_filename = f"{index:02d}_{code}.ipynb"
+        expected_path = output_dir / expected_filename
         
-        if not filepath.exists():
-            print(f"  ✗ Файл не создан: {filepath}")
+        if not expected_path.exists():
+            print(f"  ✗ Файл не создан: {expected_path}")
             return False
         
         print(f"  ✓ Файл создан: {expected_filename}")
         
         # Проверяем содержимое notebook
         try:
-            with open(filepath, 'r', encoding='utf-8') as f:
+            with open(expected_path, 'r', encoding='utf-8') as f:
                 nb = nbformat.read(f, as_version=4)
             
             # Проверяем, что есть хотя бы одна ячейка
@@ -76,33 +76,103 @@ def test_notebook_generation():
     return True
 
 
-def test_filename_sanitization_in_notebooks():
-    """Тест очистки имени файла для notebooks."""
-    print("\nТест: Очистка имени файла для notebooks")
+def test_notebook_enhancement():
+    """Тест улучшения Jupyter Notebook с критикой и кодом."""
+    print("\nТест: Улучшение Jupyter Notebook")
+    
+    from main import enhance_notebook
     
     with tempfile.TemporaryDirectory() as tmpdir:
         output_dir = Path(tmpdir)
         
-        # Тестируем тему с небезопасными символами
-        topic = "Тема/с/слешами:и:двоеточиями?"
+        # Создаем тестовый notebook
+        code = "test_topic"
+        explanation = "# Тестовое объяснение\n\nЭто тестовое содержимое."
+        index = 1
+        
+        filepath = save_explanation(output_dir, code, explanation, index)
+        if not filepath:
+            print("  ✗ Не удалось создать начальный notebook")
+            return False
+        
+        # Улучшаем notebook
+        critique = "## Критика\nЭто хорошее объяснение, но можно добавить больше деталей."
+        code_example = "# Пример кода\nprint('Hello, World!')"
+        
+        result = enhance_notebook(filepath, critique, code_example)
+        if not result:
+            print("  ✗ Не удалось улучшить notebook")
+            return False
+        
+        # Проверяем результат
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                nb = nbformat.read(f, as_version=4)
+            
+            # Должно быть: 1 исходная ячейка + 1 критика + 1 заголовок кода + 1 код = 4 ячейки
+            if len(nb.cells) != 4:
+                print(f"  ✗ Ожидалось 4 ячейки, получено {len(nb.cells)}")
+                return False
+            
+            print(f"  ✓ Notebook содержит {len(nb.cells)} ячейки")
+            
+            # Проверяем типы ячеек
+            if nb.cells[0].cell_type != 'markdown':
+                print("  ✗ Первая ячейка должна быть markdown")
+                return False
+            if nb.cells[1].cell_type != 'markdown':
+                print("  ✗ Вторая ячейка (критика) должна быть markdown")
+                return False
+            if nb.cells[2].cell_type != 'markdown':
+                print("  ✗ Третья ячейка (заголовок кода) должна быть markdown")
+                return False
+            if nb.cells[3].cell_type != 'code':
+                print("  ✗ Четвертая ячейка должна быть code")
+                return False
+            
+            print("  ✓ Типы ячеек корректны")
+            
+            # Проверяем содержимое
+            if "Критический анализ" not in nb.cells[1].source:
+                print("  ✗ Ячейка критики не содержит ожидаемый заголовок")
+                return False
+            
+            if "Пример кода" not in nb.cells[2].source:
+                print("  ✗ Заголовок кода не найден")
+                return False
+            
+            print("  ✓ Содержимое улучшений добавлено корректно")
+            
+        except Exception as e:
+            print(f"  ✗ Ошибка при проверке улучшенного notebook: {e}")
+            return False
+    
+    return True
+
+
+def test_filename_generation():
+    """Тест генерации имени файла для notebooks."""
+    print("\nТест: Генерация имени файла для notebooks")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        output_dir = Path(tmpdir)
+        
+        # Тестируем с простым кодом
+        code = "simple_code"
         explanation = "# Тестовое объяснение"
         index = 1
         
-        save_explanation(output_dir, topic, explanation, index)
+        filepath = save_explanation(output_dir, code, explanation, index)
         
-        # Проверяем, что файл создан с безопасным именем
-        expected_filename = f"{index:02d}_Тема_с_слешами_и_двоеточиями_.ipynb"
-        filepath = output_dir / expected_filename
+        # Проверяем, что файл создан с правильным именем
+        expected_filename = f"{index:02d}_{code}.ipynb"
+        expected_path = output_dir / expected_filename
         
-        if not filepath.exists():
-            print(f"  ✗ Файл не создан с безопасным именем")
-            # Показываем, какие файлы были созданы
-            files = list(output_dir.glob("*.ipynb"))
-            if files:
-                print(f"  Созданные файлы: {[f.name for f in files]}")
+        if not expected_path.exists():
+            print(f"  ✗ Файл не создан с ожидаемым именем")
             return False
         
-        print(f"  ✓ Файл создан с безопасным именем: {expected_filename}")
+        print(f"  ✓ Файл создан с правильным именем: {expected_filename}")
     
     return True
 
@@ -115,7 +185,8 @@ def main():
     
     tests = [
         test_notebook_generation,
-        test_filename_sanitization_in_notebooks,
+        test_notebook_enhancement,
+        test_filename_generation,
     ]
     
     results = [test() for test in tests]
