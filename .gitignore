@@ -15,9 +15,6 @@ ENV/
 # Output files
 outputs/
 
-# Downloaded images
-img/
-
 # IDE
 .vscode/
 .idea/

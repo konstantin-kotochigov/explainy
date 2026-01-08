@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 # Добавляем путь к модулю
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from main import read_file, read_topics
 
@@ -18,7 +18,7 @@ def test_read_system_prompt():
     try:
         content = read_file('system_prompt.txt')
         assert len(content) > 0, "Системный промпт пустой"
-        assert "эксперт" in content.lower(), "Системный промпт не содержит ожидаемое содержание"
+        assert "блога" in content.lower(), "Системный промпт не содержит ожидаемое содержание"
         print(f"  ✓ Системный промпт загружен: {len(content)} символов")
     except Exception as e:
         print(f"  ✗ Ошибка: {e}")
