@@ -71,7 +71,10 @@ DPR - это метод информационного поиска, котор�
         # Шаг 3: Симуляция генерации кода (Secondary LLM)
         print("\n[3/4] Симуляция генерации кода с OpenAI...")
         code_example = """# Пример использования DPR с библиотекой transformers
-from transformers import DPRContextEncoder, DPRQuestionEncoder, DPRContextEncoderTokenizer, DPRQuestionEncoderTokenizer
+from transformers import (
+    DPRContextEncoder, DPRQuestionEncoder,
+    DPRContextEncoderTokenizer, DPRQuestionEncoderTokenizer
+)
 import torch
 
 # Инициализация энкодеров и токенизаторов
