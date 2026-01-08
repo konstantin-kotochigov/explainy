@@ -10,7 +10,7 @@ import tempfile
 import nbformat
 
 # Добавляем путь к модулю
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from main import save_explanation, enhance_notebook
 
@@ -50,7 +50,7 @@ DPR использует two-tower архитектуру с двумя BERT э�
 - Высокая точность поиска
 - Быстрый инференс после предварительной индексации"""
         
-        filepath = save_explanation(output_dir, code, explanation, 1)
+        filepath = save_explanation(output_dir, code, explanation)
         print(f"  ✓ Создан базовый notebook: {filepath.name}")
         
         # Шаг 2: Secondary LLM (OpenAI) генерирует критику
