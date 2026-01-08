@@ -27,15 +27,15 @@ GOOGLE_SEARCH_TIMEOUT = 30  # 30 seconds for Google Custom Search API
 IMAGE_DOWNLOAD_TIMEOUT = 10  # 10 seconds per image download
 
 # Image search settings
-MAX_IMAGES_PER_QUERY = 10  # Maximum number of images to download per topic
+MAX_IMAGES_PER_QUERY = 5  # Maximum number of images to download per topic
 
 # LLM model names
 PRIMARY_MODEL = "gemini-2.5-flash"  # Google Gemini model for main content
 SECONDARY_MODEL = "gpt-4o-mini"  # OpenAI model for critique and code generation
 
 # LLM generation parameters
-CRITIQUE_TEMPERATURE = 0.7  # Temperature for critique generation
-CODE_TEMPERATURE = 0.7  # Temperature for code example generation
+CRITIQUE_TEMPERATURE = 0.2  # Temperature for critique generation
+CODE_TEMPERATURE = 0.2  # Temperature for code example generation
 
 
 def read_file(filepath: str) -> str:
@@ -254,16 +254,7 @@ def generate_critique(client: OpenAI, critic_system_prompt: str, content: str, t
     Returns:
         Текст критики или None в случае ошибки
     """
-    critique_prompt = f"""Ты эксперт в области AI/ML и Computer Science. Проанализируй следующее объяснение темы "{topic}" и предоставь конструктивную критику.
-
-Сосредоточься на:
-1. Полноте и точности технической информации
-2. Ясности изложения и структуре
-3. Наличии конкретных примеров и деталей
-4. Областях, где объяснение можно улучшить или дополнить
-
-Будь конкретным и конструктивным. Формат ответа - Markdown.
-
+    critique_prompt = f"""Проанализируй следующее объяснение темы "{topic}". Будь конкретным и конструктивным. Формат ответа - Markdown.
 Содержимое для анализа:
 {content}"""
     
@@ -296,16 +287,12 @@ def generate_code_example(client: OpenAI, content: str, topic: str) -> str | Non
     Returns:
         Python код-пример или None в случае ошибки
     """
-    code_prompt = f"""На основе следующего объяснения темы "{topic}", создай Python код-пример, который демонстрирует основные концепции.
-
-Требования к коду:
-1. Код должен быть иллюстративным (не production-level)
-2. Добавь комментарии, объясняющие ключевые моменты
-3. Используй простые и понятные примеры
-4. Если это ML модель - покажи основные этапы (инициализация, обучение/инференс)
-5. Если это библиотека - покажи типовые случаи использования
-
-Верни ТОЛЬКО Python код с комментариями, без дополнительных объяснений.
+    code_prompt = f"""На основе следующего объяснения темы "{topic}", создай один или несколько примеров на Python, которые проиллюстрировали бы основные концепции, описанные в документе.
+Если есть готовые реализации бибилотек на базе описываемой модель ии метод, отлично - покажи, как их применять. Если понятно, проще реализовать метод самому, ok, напиши нативный код.
+Важно, чтобы код иллюстрировал не абстрактную общую концепцию, а именно специфику данной темы - чтобы было видно отличия метода от его альтренатив.
+Не нужно пписать production-level код, достаточно пары простых игрушечных примеров.
+НЕ забудь добавить комментарии, объясняющие ключевые моменты.
+Верни ТОЛЬКО Python код с комментариями. Формат - Markdown.
 
 Содержимое объяснения:
 {content}"""
