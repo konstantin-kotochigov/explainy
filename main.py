@@ -302,13 +302,16 @@ def generate_code_example(client: OpenAI, content: str, topic: str) -> str | Non
         )
         if response.choices and len(response.choices) > 0:
             code = response.choices[0].message.content
-            # Убираем markdown форматирование если есть
-            if code.startswith("```python"):
-                code = code[9:].strip()
-            elif code.startswith("```"):
-                code = code[3:].strip()
-            if code.endswith("```"):
-                code = code[:-3].strip()
+            # Убираем markdown форматирование кода если есть
+            PYTHON_FENCE = "```python"
+            CODE_FENCE = "```"
+            
+            if code.startswith(PYTHON_FENCE):
+                code = code[len(PYTHON_FENCE):].strip()
+            elif code.startswith(CODE_FENCE):
+                code = code[len(CODE_FENCE):].strip()
+            if code.endswith(CODE_FENCE):
+                code = code[:-len(CODE_FENCE)].strip()
             return code.strip()
         return None
     except Exception as e:
@@ -322,14 +325,17 @@ def enhance_notebook(filepath: Path, critique: str, code_example: str) -> bool:
     
     Args:
         filepath: Путь к файлу notebook
-        critique: Текст критики
-        code_example: Python код-пример
+        critique: Текст критики (может быть None или пустой строкой)
+        code_example: Python код-пример (может быть None или пустой строкой)
         
     Returns:
         True если успешно, False в случае ошибки
     """
-    # Если нечего добавлять, возвращаем успех без изменений
-    if not critique and not code_example:
+    # Если нет содержимого для добавления, возвращаем успех без изменений
+    has_critique = critique and critique.strip()
+    has_code = code_example and code_example.strip()
+    
+    if not has_critique and not has_code:
         return True
     
     try:
@@ -338,12 +344,12 @@ def enhance_notebook(filepath: Path, critique: str, code_example: str) -> bool:
             nb = nbformat.read(f, as_version=4)
         
         # Добавляем ячейку с критикой
-        if critique:
+        if has_critique:
             critique_cell = new_markdown_cell(f"## 📝 Критический анализ\n\n{critique}")
             nb.cells.append(critique_cell)
         
         # Добавляем ячейку с кодом
-        if code_example:
+        if has_code:
             code_header = new_markdown_cell("## 💻 Пример кода\n\nИллюстративный Python пример, демонстрирующий основные концепции:")
             nb.cells.append(code_header)
             code_cell = new_code_cell(code_example)
