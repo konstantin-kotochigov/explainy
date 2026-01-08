@@ -102,13 +102,14 @@ def generate_explanation(client: OpenAI, system_prompt: str, user_prompt_templat
         return None
 
 
-def download_images(code: str, image_query: str) -> str | None:
+def download_images(code: str, image_query: str, output_dir: Path) -> str | None:
     """
     Загружает изображения используя Google Custom Search API.
     
     Args:
         code: Кодовое имя темы для создания директории
         image_query: Поисковый запрос на английском для API поиска изображений
+        output_dir: Путь к директории outputs
         
     Returns:
         Путь к директории с загруженными изображениями или None в случае ошибки
@@ -144,7 +145,7 @@ def download_images(code: str, image_query: str) -> str | None:
             return None
         
         # Создаем директорию для изображений по кодовому имени внутри outputs/img
-        img_dir = Path('outputs') / 'img' / code
+        img_dir = output_dir / 'img' / code
         img_dir.mkdir(parents=True, exist_ok=True)
         
         # Загружаем изображения
@@ -465,10 +466,17 @@ def main():
     topics = read_topics('topics.txt')
     print(f"✓ Загружено тем: {len(topics)}")
     
-    # Создаем директорию для выходных файлов
-    output_dir = Path('outputs')
+    # Создаем директорию для выходных файлов (параметризованная)
+    output_dir_path = os.getenv('OUTPUTS_DIR', 'outputs')
+    output_dir = Path(output_dir_path)
     output_dir.mkdir(exist_ok=True)
+    
+    # Создаем директорию для изображений внутри outputs
+    img_dir = output_dir / 'img'
+    img_dir.mkdir(exist_ok=True)
+    
     print(f"✓ Директория для сохранения: {output_dir}")
+    print(f"✓ Директория для изображений: {img_dir}")
     
     # Генерируем объяснения для каждой темы
     print(f"\nГенерация объяснений для {len(topics)} тем:")
@@ -482,7 +490,7 @@ def main():
         print(f"\n[{i}/{len(topics)}] Генерируем объяснение для: {detailed_query}")
         
         # Загружаем изображения для темы, используя кодовое имя и запрос на английском
-        img_dir = download_images(code, image_query)
+        img_dir = download_images(code, image_query, output_dir)
         
         explanation = generate_explanation(gemini_client, system_prompt, main_user_prompt_template, detailed_query)
         
