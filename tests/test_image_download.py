@@ -9,9 +9,10 @@ import tempfile
 import shutil
 from unittest.mock import Mock, patch
 import os
+from io import StringIO
 
 # Добавляем путь к модулю
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from main import download_images
 
@@ -190,6 +191,89 @@ def test_download_images_directory_structure():
             del os.environ['GOOGLE_SEARCH_ENGINE_ID']
 
 
+def test_download_images_logs_api_query():
+    """Тест логирования raw Google API query в stdout."""
+    print("\nТест 4: Проверка логирования Google API query")
+    
+    # Устанавливаем тестовые API ключи
+    os.environ['GOOGLE_SEARCH_API_KEY'] = 'test_api_key_123'
+    os.environ['GOOGLE_SEARCH_ENGINE_ID'] = 'test_engine_id_456'
+    
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            old_cwd = os.getcwd()
+            os.chdir(tmpdir)
+            
+            try:
+                # Перехватываем stdout
+                captured_output = StringIO()
+                old_stdout = sys.stdout
+                sys.stdout = captured_output
+                
+                try:
+                    with patch('main.requests.get') as mock_get, \
+                         patch('main.requests.Request') as mock_request:
+                        # Мокаем PreparedRequest
+                        mock_prepared = Mock()
+                        mock_prepared.url = 'https://www.googleapis.com/customsearch/v1?key=test_api_key_123&cx=test_engine_id_456&q=test+query&searchType=image&imgSize=large&num=10'
+                        
+                        mock_request_instance = Mock()
+                        mock_request_instance.prepare.return_value = mock_prepared
+                        mock_request.return_value = mock_request_instance
+                        
+                        # Мокаем ответ API
+                        mock_search_response = Mock()
+                        mock_search_response.json.return_value = {
+                            'items': [{'link': 'https://example.com/img1.jpg'}]
+                        }
+                        mock_search_response.raise_for_status = Mock()
+                        
+                        mock_img_response = Mock()
+                        mock_img_response.iter_content = lambda chunk_size: [b'test']
+                        mock_img_response.raise_for_status = Mock()
+                        
+                        def side_effect(*args, **kwargs):
+                            if 'customsearch' in args[0]:
+                                return mock_search_response
+                            else:
+                                return mock_img_response
+                        
+                        mock_get.side_effect = side_effect
+                        
+                        # Вызываем функцию
+                        download_images("test_code", "test query")
+                        
+                finally:
+                    # Восстанавливаем stdout
+                    sys.stdout = old_stdout
+                    output = captured_output.getvalue()
+                    
+                    # Проверяем наличие лога с Google API query
+                    if 'Google API query:' not in output:
+                        print("  ✗ Лог Google API query не найден в stdout")
+                        print(f"  Вывод: {output}")
+                        return False
+                    
+                    # Проверяем, что URL содержит ожидаемые параметры
+                    if 'https://www.googleapis.com/customsearch/v1' not in output:
+                        print("  ✗ URL Google API не найден в логе")
+                        return False
+                    
+                    print("  ✓ Google API query корректно залогирован в stdout")
+                    print(f"  Найденный лог содержит: Google API query")
+                    
+                    return True
+                    
+            finally:
+                os.chdir(old_cwd)
+                
+    finally:
+        if 'GOOGLE_SEARCH_API_KEY' in os.environ:
+            del os.environ['GOOGLE_SEARCH_API_KEY']
+        if 'GOOGLE_SEARCH_ENGINE_ID' in os.environ:
+            del os.environ['GOOGLE_SEARCH_ENGINE_ID']
+
+
 def main():
     """Запуск всех тестов."""
     print("=" * 80)
@@ -200,6 +284,7 @@ def main():
         test_download_images_without_api_keys,
         test_download_images_with_mock_api,
         test_download_images_directory_structure,
+        test_download_images_logs_api_query,
     ]
     
     results = [test() for test in tests]

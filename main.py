@@ -114,6 +114,9 @@ def download_images(code: str, image_query: str) -> str | None:
         }
         
         print(f"  Поиск изображений по запросу: {image_query}")
+        # Prepare the request to get the exact URL that will be sent
+        prepared_request = requests.Request('GET', url, params=params).prepare()
+        print(f"  Google API query: {prepared_request.url}")
         response = requests.get(url, params=params, timeout=30)
         response.raise_for_status()
         
