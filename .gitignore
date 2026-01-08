@@ -25,3 +25,10 @@ outputs/
 # OS
 .DS_Store
 Thumbs.db
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+*.ipynb_checkpoints
+**/.ipynb_checkpoints/
+**/*.ipynb_checkpoints
