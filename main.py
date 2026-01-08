@@ -19,6 +19,26 @@ from nbformat.v4 import new_notebook, new_markdown_cell, new_code_cell
 import requests
 
 
+# Configuration Constants
+# API timeouts (in seconds)
+GEMINI_API_TIMEOUT = 900.0  # 15 minutes for primary LLM generation
+OPENAI_API_TIMEOUT = 120.0  # 2 minutes for secondary LLM (critique and code)
+GOOGLE_SEARCH_TIMEOUT = 30  # 30 seconds for Google Custom Search API
+IMAGE_DOWNLOAD_TIMEOUT = 10  # 10 seconds per image download
+
+# Image search settings
+MAX_IMAGES_PER_QUERY = 10  # Maximum number of images to download per topic
+IMAGE_SIZE_FILTER = 'large'  # Image size filter for Google Custom Search
+
+# LLM model names
+PRIMARY_MODEL = "gemini-2.5-flash"  # Google Gemini model for main content
+SECONDARY_MODEL = "gpt-4o-mini"  # OpenAI model for critique and code generation
+
+# LLM generation parameters
+CRITIQUE_TEMPERATURE = 0.7  # Temperature for critique generation
+CODE_TEMPERATURE = 0.7  # Temperature for code example generation
+
+
 def read_file(filepath: str) -> str:
     """Читает содержимое файла."""
     try:
@@ -66,7 +86,7 @@ def generate_explanation(client: OpenAI, system_prompt: str, topic: str) -> str:
     """Генерирует объяснение темы используя OpenAI API."""
     try:
         response = client.chat.completions.create(
-            model="gemini-2.5-flash",
+            model=PRIMARY_MODEL,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Объясни следующую тему: {topic}"}
@@ -109,12 +129,12 @@ def download_images(code: str, image_query: str) -> str | None:
             'cx': search_engine_id,
             'q': image_query,
             'searchType': 'image',
-            'imgSize': 'large',  # Фильтр по размеру изображений
-            'num': 10  # Максимум 10 изображений за запрос
+            'imgSize': IMAGE_SIZE_FILTER,  # Фильтр по размеру изображений
+            'num': MAX_IMAGES_PER_QUERY  # Максимум изображений за запрос
         }
         
         print(f"  Поиск изображений по запросу: {image_query}")
-        response = requests.get(url, params=params, timeout=30)
+        response = requests.get(url, params=params, timeout=GOOGLE_SEARCH_TIMEOUT)
         response.raise_for_status()
         
         data = response.json()
@@ -124,8 +144,8 @@ def download_images(code: str, image_query: str) -> str | None:
             print("  ⚠ Изображения не найдены")
             return None
         
-        # Создаем директорию для изображений по кодовому имени
-        img_dir = Path('img') / code
+        # Создаем директорию для изображений по кодовому имени внутри outputs/img
+        img_dir = Path('outputs') / 'img' / code
         img_dir.mkdir(parents=True, exist_ok=True)
         
         # Загружаем изображения
@@ -133,7 +153,7 @@ def download_images(code: str, image_query: str) -> str | None:
         for i, item in enumerate(data['items'], start=1):
             try:
                 img_url = item['link']
-                img_response = requests.get(img_url, timeout=10, stream=True)
+                img_response = requests.get(img_url, timeout=IMAGE_DOWNLOAD_TIMEOUT, stream=True)
                 img_response.raise_for_status()
                 
                 # Определяем расширение файла из URL или Content-Type
@@ -170,9 +190,9 @@ def download_images(code: str, image_query: str) -> str | None:
         return None
 
 
-def save_explanation(output_dir: Path, code: str, explanation: str, index: int):
+def save_explanation(output_dir: Path, code: str, explanation: str):
     """Сохраняет объяснение в Jupyter Notebook."""
-    filename = f"{index:02d}_{code}.ipynb"
+    filename = f"{code}.ipynb"
     filepath = output_dir / filename
     
     try:
@@ -223,12 +243,13 @@ def parse_notebook(filepath: Path) -> dict:
         return None
 
 
-def generate_critique(client: OpenAI, content: str, topic: str) -> str | None:
+def generate_critique(client: OpenAI, critic_system_prompt: str, content: str, topic: str) -> str | None:
     """
     Генерирует критику содержимого используя OpenAI API.
     
     Args:
         client: OpenAI клиент для вторичного LLM
+        critic_system_prompt: Системный промпт для критика
         content: Содержимое для критики
         topic: Тема объяснения
         
@@ -250,12 +271,12 @@ def generate_critique(client: OpenAI, content: str, topic: str) -> str | None:
     
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=SECONDARY_MODEL,
             messages=[
-                {"role": "system", "content": "Ты эксперт-рецензент технических материалов по AI/ML и Computer Science."},
+                {"role": "system", "content": critic_system_prompt},
                 {"role": "user", "content": critique_prompt}
             ],
-            temperature=0.7
+            temperature=CRITIQUE_TEMPERATURE
         )
         if response.choices and len(response.choices) > 0:
             return response.choices[0].message.content
@@ -293,12 +314,12 @@ def generate_code_example(client: OpenAI, content: str, topic: str) -> str | Non
     
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=SECONDARY_MODEL,
             messages=[
                 {"role": "system", "content": "Ты эксперт Python программист, специализирующийся на AI/ML и Computer Science."},
                 {"role": "user", "content": code_prompt}
             ],
-            temperature=0.7
+            temperature=CODE_TEMPERATURE
         )
         if response.choices and len(response.choices) > 0:
             code = response.choices[0].message.content
@@ -386,13 +407,20 @@ def main():
         print("  Для активации: добавьте OPENAI_API_KEY в файл .env")
     
     # Инициализируем клиенты
-    gemini_client = OpenAI(api_key=gemini_api_key, base_url="https://generativelanguage.googleapis.com/v1beta/openai/", timeout=900.0)
-    openai_client = OpenAI(api_key=openai_api_key, timeout=120.0) if use_critique else None
+    gemini_client = OpenAI(api_key=gemini_api_key, base_url="https://generativelanguage.googleapis.com/v1beta/openai/", timeout=GEMINI_API_TIMEOUT)
+    openai_client = OpenAI(api_key=openai_api_key, timeout=OPENAI_API_TIMEOUT) if use_critique else None
     
     # Читаем системный промпт
     print("Читаем системный промпт...")
     system_prompt = read_file('system_prompt.txt')
     print(f"✓ Системный промпт загружен ({len(system_prompt)} символов)")
+    
+    # Читаем системный промпт для критика (только если включена критика)
+    critic_system_prompt = None
+    if use_critique:
+        print("Читаем системный промпт для критика...")
+        critic_system_prompt = read_file('critic_system_prompt.txt')
+        print(f"✓ Системный промпт критика загружен ({len(critic_system_prompt)} символов)")
     
     # Читаем список тем
     print("\nЧитаем список тем...")
@@ -421,7 +449,7 @@ def main():
         explanation = generate_explanation(gemini_client, system_prompt, detailed_query)
         
         if explanation:
-            filepath = save_explanation(output_dir, code, explanation, i)
+            filepath = save_explanation(output_dir, code, explanation)
             
             # Если сохранение успешно и включена критика, добавляем улучшения
             if filepath and use_critique:
@@ -431,7 +459,7 @@ def main():
                 parsed = parse_notebook(filepath)
                 if parsed:
                     # Генерируем критику
-                    critique = generate_critique(openai_client, parsed['content'], detailed_query)
+                    critique = generate_critique(openai_client, critic_system_prompt, parsed['content'], detailed_query)
                     if critique:
                         print(f"  ✓ Критика сгенерирована")
                     

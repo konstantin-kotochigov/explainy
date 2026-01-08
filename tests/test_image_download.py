@@ -11,7 +11,7 @@ from unittest.mock import Mock, patch
 import os
 
 # Добавляем путь к модулю
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from main import download_images
 
@@ -166,7 +166,7 @@ def test_download_images_directory_structure():
                         print("  ✗ Функция вернула None")
                         return False
                     
-                    expected_path = Path('img') / code
+                    expected_path = Path('outputs') / 'img' / code
                     
                     if str(expected_path) != result:
                         print(f"  ✗ Неверный путь. Ожидалось: {expected_path}, получено: {result}")

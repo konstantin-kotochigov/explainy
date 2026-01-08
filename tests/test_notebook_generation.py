@@ -9,7 +9,7 @@ import tempfile
 import nbformat
 
 # Добавляем путь к модулю
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from main import save_explanation
 
@@ -25,13 +25,12 @@ def test_notebook_generation():
         # Тестовые данные
         code = "dpr"
         explanation = "# DPR (2020)\n\nDeep Passage Retrieval - это метод для поиска релевантных документов."
-        index = 1
         
         # Генерируем notebook
-        filepath = save_explanation(output_dir, code, explanation, index)
+        filepath = save_explanation(output_dir, code, explanation)
         
         # Проверяем, что файл создан
-        expected_filename = f"{index:02d}_{code}.ipynb"
+        expected_filename = f"{code}.ipynb"
         expected_path = output_dir / expected_filename
         
         if not expected_path.exists():
@@ -88,9 +87,8 @@ def test_notebook_enhancement():
         # Создаем тестовый notebook
         code = "test_topic"
         explanation = "# Тестовое объяснение\n\nЭто тестовое содержимое."
-        index = 1
         
-        filepath = save_explanation(output_dir, code, explanation, index)
+        filepath = save_explanation(output_dir, code, explanation)
         if not filepath:
             print("  ✗ Не удалось создать начальный notebook")
             return False
@@ -160,12 +158,11 @@ def test_filename_generation():
         # Тестируем с простым кодом
         code = "simple_code"
         explanation = "# Тестовое объяснение"
-        index = 1
         
-        filepath = save_explanation(output_dir, code, explanation, index)
+        filepath = save_explanation(output_dir, code, explanation)
         
         # Проверяем, что файл создан с правильным именем
-        expected_filename = f"{index:02d}_{code}.ipynb"
+        expected_filename = f"{code}.ipynb"
         expected_path = output_dir / expected_filename
         
         if not expected_path.exists():
