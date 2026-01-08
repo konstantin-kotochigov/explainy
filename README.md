@@ -7,7 +7,7 @@
 
 **Основной процесс:**
 1. Читает список тем из файла `topics.txt`
-2. Читает системный промпт из файла `system_prompt.txt` с требованиями к стилю генерации
+2. Читает промпты из папки `prompts/`
 3. Для каждой темы загружает изображения из Google Custom Search API (опционально)
 4. Генерирует объяснение используя **Google Gemini** (primary LLM)
 5. Анализирует сгенерированное объяснение используя **OpenAI GPT** (secondary LLM) для:
@@ -20,15 +20,15 @@
 ### Primary LLM (Google Gemini)
 - **Роль**: Генерация основного содержимого объяснений
 - **Модель**: `gemini-2.5-flash`
-- **Входные данные**: Системный промпт + тема для объяснения
+- **Входные данные**: Промпты из `prompts/main_system_prompt.txt` и `prompts/main_user_prompt.txt`
 - **Выходные данные**: Полное техническое объяснение в формате Markdown
 
 ### Secondary LLM (OpenAI GPT)
 - **Роль**: Критика и улучшение сгенерированного контента
 - **Модель**: `gpt-4o-mini`
 - **Функции**:
-  1. **Критический анализ**: Анализирует сгенерированное объяснение и предоставляет конструктивную критику
-  2. **Генерация кода**: Создает Python примеры, демонстрирующие объясненные концепции
+  1. **Критический анализ**: Анализирует сгенерированное объяснение и предоставляет конструктивную критику (промпты из `prompts/critic_system_prompt.txt` и `prompts/critic_user_prompt.txt`)
+  2. **Генерация кода**: Создает Python примеры, демонстрирующие объясненные концепции (промпты из `prompts/code_generation_system_prompt.txt` и `prompts/code_generation_prompt.txt`)
 
 ## Установка
 
@@ -84,7 +84,7 @@ GOOGLE_SEARCH_ENGINE_ID=your_search_engine_id_here
    dpr;Методы информационного поиска / метод Deep Passage Retrieval (DPR);information retrieval Deep Passage Retrieval DPR diagram
    ```
 
-2. При необходимости отредактируйте `system_prompt.txt` для изменения стиля генерации
+2. При необходимости отредактируйте промпты в папке `prompts/` для изменения стиля генерации (см. `prompts/README.md` для деталей)
 
 3. Запустите приложение:
 ```bash
@@ -115,14 +115,22 @@ python main.py
 explainy/
 ├── main.py                         # Основной скрипт приложения с двумя LLM
 ├── topics.txt                      # Список тем для объяснения
-├── system_prompt.txt               # Системный промпт с требованиями к стилю
+├── prompts/                        # Папка с промптами для LLM
+│   ├── README.md                   # Документация по промптам
+│   ├── main_system_prompt.txt      # Системный промпт для основной модели
+│   ├── main_user_prompt.txt        # Шаблон запроса к основной модели
+│   ├── critic_system_prompt.txt    # Системный промпт для модели-критика
+│   ├── critic_user_prompt.txt      # Шаблон запроса к модели-критику
+│   ├── code_generation_system_prompt.txt  # Системный промпт для генерации кода
+│   └── code_generation_prompt.txt  # Шаблон запроса для генерации кода
 ├── requirements.txt                # Python зависимости
 ├── .env.example                    # Пример файла с переменными окружения
 ├── .gitignore                      # Файлы для игнорирования Git
-├── test_app.py                     # Тесты основной функциональности
-├── test_notebook_generation.py     # Тесты генерации Jupyter Notebooks
-├── test_critique_enhancement.py    # Тесты критики и улучшения notebooks
-├── test_image_download.py          # Тесты загрузки изображений
+├── tests/                          # Тесты
+│   ├── test_app.py                 # Тесты основной функциональности
+│   ├── test_notebook_generation.py # Тесты генерации Jupyter Notebooks
+│   ├── test_critique_enhancement.py # Тесты критики и улучшения notebooks
+│   └── test_image_download.py      # Тесты загрузки изображений
 ├── outputs/                        # Директория с сгенерированными объяснениями (создается автоматически)
 ├── img/                            # Директория с загруженными изображениями (создается автоматически)
 └── README.md                       # Этот файл
@@ -145,12 +153,21 @@ rag;Методы информационного поиска / метод RAG (2
 colbert;Методы информационного поиска / метод ColBERT (2020);information retrieval ColBERT architecture diagram
 ```
 
-### Файл system_prompt.txt
-Содержит инструкции для primary LLM (Gemini) о том, как должны быть написаны объяснения. Можно настроить:
-- Стиль изложения
-- Структуру ответа
-- Длину текста
-- Целевую аудиторию
+### Настройка промптов
+
+Все промпты хранятся в папке `prompts/`. Подробное описание структуры и назначения каждого промпта см. в `prompts/README.md`.
+
+**Основная модель (Gemini):**
+- `prompts/main_system_prompt.txt` - определяет стиль и формат генерации объяснений
+- `prompts/main_user_prompt.txt` - шаблон запроса для генерации объяснения
+
+**Модель-критик и генерация кода (OpenAI GPT):**
+- `prompts/critic_system_prompt.txt` - требования к критическому анализу
+- `prompts/critic_user_prompt.txt` - шаблон запроса критики
+- `prompts/code_generation_system_prompt.txt` - роль модели при генерации кода
+- `prompts/code_generation_prompt.txt` - инструкции для создания примеров кода
+
+При изменении промптов учитывайте параметры-плейсхолдеры (`{topic}`, `{content}`), которые используются в коде.
 
 ### Настройка критики и генерации кода
 
