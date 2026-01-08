@@ -43,14 +43,14 @@ def read_topics(filepath: str) -> list[dict]:
     """
     content = read_file(filepath)
     topics = []
-    for line in content.split('\n'):
+    for line_num, line in enumerate(content.split('\n'), start=1):
         line = line.strip()
         if not line:
             continue
         
         parts = line.split(';')
         if len(parts) != 3:
-            print(f"Предупреждение: неверный формат строки (ожидается 3 поля, получено {len(parts)})")
+            print(f"Предупреждение: неверный формат строки {line_num} (ожидается 3 поля, получено {len(parts)}): {line[:60]}...")
             continue
         
         topics.append({
@@ -304,11 +304,11 @@ def generate_code_example(client: OpenAI, content: str, topic: str) -> str | Non
             code = response.choices[0].message.content
             # Убираем markdown форматирование если есть
             if code.startswith("```python"):
-                code = code[9:]
-            if code.startswith("```"):
-                code = code[3:]
+                code = code[9:].strip()
+            elif code.startswith("```"):
+                code = code[3:].strip()
             if code.endswith("```"):
-                code = code[:-3]
+                code = code[:-3].strip()
             return code.strip()
         return None
     except Exception as e:
@@ -328,6 +328,10 @@ def enhance_notebook(filepath: Path, critique: str, code_example: str) -> bool:
     Returns:
         True если успешно, False в случае ошибки
     """
+    # Если нечего добавлять, возвращаем успех без изменений
+    if not critique and not code_example:
+        return True
+    
     try:
         # Читаем существующий notebook
         with open(filepath, 'r', encoding='utf-8') as f:
