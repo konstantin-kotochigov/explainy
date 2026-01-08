@@ -9,9 +9,9 @@ import tempfile
 import nbformat
 
 # Добавляем путь к модулю
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from main import parse_notebook, enhance_notebook, save_explanation
+from main import parse_notebook, enhance_notebook, save_explanation, save_complete_notebook
 
 
 def test_parse_notebook():
@@ -24,9 +24,8 @@ def test_parse_notebook():
         # Создаем тестовый notebook
         code = "test"
         explanation = "# Заголовок\n\nПервый параграф.\n\n## Подзаголовок\n\nВторой параграф."
-        index = 1
         
-        filepath = save_explanation(output_dir, code, explanation, index)
+        filepath = save_explanation(output_dir, code, explanation)
         if not filepath:
             print("  ✗ Не удалось создать notebook")
             return False
@@ -76,9 +75,8 @@ def test_enhance_notebook_with_critique_only():
         # Создаем тестовый notebook
         code = "test"
         explanation = "# Тестовое объяснение"
-        index = 1
         
-        filepath = save_explanation(output_dir, code, explanation, index)
+        filepath = save_explanation(output_dir, code, explanation)
         if not filepath:
             print("  ✗ Не удалось создать notebook")
             return False
@@ -119,9 +117,8 @@ def test_enhance_notebook_with_code_only():
         # Создаем тестовый notebook
         code = "test"
         explanation = "# Тестовое объяснение"
-        index = 1
         
-        filepath = save_explanation(output_dir, code, explanation, index)
+        filepath = save_explanation(output_dir, code, explanation)
         if not filepath:
             print("  ✗ Не удалось создать notebook")
             return False
@@ -166,9 +163,8 @@ def test_enhance_notebook_with_both():
         # Создаем тестовый notebook
         code = "test"
         explanation = "# Тестовое объяснение"
-        index = 1
         
-        filepath = save_explanation(output_dir, code, explanation, index)
+        filepath = save_explanation(output_dir, code, explanation)
         if not filepath:
             print("  ✗ Не удалось создать notebook")
             return False
@@ -206,6 +202,90 @@ def test_enhance_notebook_with_both():
     return True
 
 
+def test_save_complete_notebook():
+    """Тест сохранения полного notebook за один раз (оптимизированный workflow)."""
+    print("\nТест: Сохранение полного notebook за один раз")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        output_dir = Path(tmpdir)
+        
+        # Создаем полный notebook с объяснением, критикой и кодом
+        code = "test"
+        explanation = "# Тестовое объяснение\n\nЭто основное содержимое."
+        critique = "Хорошее объяснение с некоторыми улучшениями."
+        code_example = "# Пример использования\nimport numpy as np\nprint(np.__version__)"
+        
+        filepath = save_complete_notebook(output_dir, code, explanation, critique, code_example)
+        
+        if not filepath:
+            print("  ✗ Не удалось создать notebook")
+            return False
+        
+        # Проверяем результат
+        with open(filepath, 'r', encoding='utf-8') as f:
+            nb = nbformat.read(f, as_version=4)
+        
+        # Должно быть 4 ячейки: объяснение + критика + заголовок кода + код
+        if len(nb.cells) != 4:
+            print(f"  ✗ Ожидалось 4 ячейки, получено {len(nb.cells)}")
+            return False
+        
+        # Проверяем наличие объяснения
+        if "Тестовое объяснение" not in nb.cells[0].source:
+            print("  ✗ Объяснение не найдено")
+            return False
+        
+        # Проверяем наличие критики
+        if "Критический анализ" not in nb.cells[1].source:
+            print("  ✗ Критика не найдена")
+            return False
+        
+        # Проверяем наличие кода
+        if nb.cells[3].cell_type != 'code':
+            print("  ✗ Последняя ячейка должна быть кодом")
+            return False
+        
+        print("  ✓ Полный notebook создан за один раз успешно")
+    
+    return True
+
+
+def test_save_complete_notebook_without_critique():
+    """Тест сохранения notebook без критики (только объяснение)."""
+    print("\nТест: Сохранение notebook без критики")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        output_dir = Path(tmpdir)
+        
+        # Создаем notebook только с объяснением
+        code = "test"
+        explanation = "# Тестовое объяснение\n\nЭто основное содержимое."
+        
+        filepath = save_complete_notebook(output_dir, code, explanation)
+        
+        if not filepath:
+            print("  ✗ Не удалось создать notebook")
+            return False
+        
+        # Проверяем результат
+        with open(filepath, 'r', encoding='utf-8') as f:
+            nb = nbformat.read(f, as_version=4)
+        
+        # Должна быть 1 ячейка: только объяснение
+        if len(nb.cells) != 1:
+            print(f"  ✗ Ожидалось 1 ячейка, получено {len(nb.cells)}")
+            return False
+        
+        # Проверяем наличие объяснения
+        if "Тестовое объяснение" not in nb.cells[0].source:
+            print("  ✗ Объяснение не найдено")
+            return False
+        
+        print("  ✓ Notebook без критики создан успешно")
+    
+    return True
+
+
 def main():
     """Запуск всех тестов."""
     print("=" * 80)
@@ -217,6 +297,8 @@ def main():
         test_enhance_notebook_with_critique_only,
         test_enhance_notebook_with_code_only,
         test_enhance_notebook_with_both,
+        test_save_complete_notebook,
+        test_save_complete_notebook_without_critique,
     ]
     
     results = [test() for test in tests]

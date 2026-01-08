@@ -211,6 +211,53 @@ def save_explanation(output_dir: Path, code: str, explanation: str):
         return None
 
 
+def save_complete_notebook(output_dir: Path, code: str, explanation: str, critique: str = None, code_example: str = None):
+    """
+    Сохраняет полный notebook с объяснением, критикой и примером кода за один раз.
+    
+    Args:
+        output_dir: Директория для сохранения
+        code: Кодовое имя темы
+        explanation: Текст объяснения
+        critique: Текст критики (опционально)
+        code_example: Python код-пример (опционально)
+        
+    Returns:
+        Путь к сохраненному файлу или None в случае ошибки
+    """
+    filename = f"{code}.ipynb"
+    filepath = output_dir / filename
+    
+    try:
+        # Создаем новый notebook
+        nb = new_notebook()
+        
+        # Добавляем ячейку с объяснением
+        nb.cells.append(new_markdown_cell(explanation))
+        
+        # Добавляем ячейку с критикой, если есть
+        if critique and critique.strip():
+            critique_cell = new_markdown_cell(f"## 📝 Критический анализ\n\n{critique}")
+            nb.cells.append(critique_cell)
+        
+        # Добавляем ячейки с кодом, если есть
+        if code_example and code_example.strip():
+            code_header = new_markdown_cell("## 💻 Пример кода\n\nИллюстративный Python пример, демонстрирующий основные концепции:")
+            nb.cells.append(code_header)
+            code_cell = new_code_cell(code_example)
+            nb.cells.append(code_cell)
+        
+        # Сохраняем notebook
+        with open(filepath, 'w', encoding='utf-8') as f:
+            nbformat.write(nb, f)
+        
+        print(f"✓ Сохранено: {filepath}")
+        return filepath
+    except Exception as e:
+        print(f"Ошибка при сохранении файла {filepath}: {e}")
+        return None
+
+
 def parse_notebook(filepath: Path) -> dict:
     """
     Парсит Jupyter Notebook и возвращает структурированные данные.
@@ -434,29 +481,27 @@ def main():
         explanation = generate_explanation(gemini_client, system_prompt, detailed_query)
         
         if explanation:
-            filepath = save_explanation(output_dir, code, explanation)
+            # Если включена критика, генерируем критику и код-примеры до сохранения
+            critique = None
+            code_example = None
             
-            # Если сохранение успешно и включена критика, добавляем улучшения
-            if filepath and use_critique:
+            if use_critique:
                 print(f"  Генерируем критику и код-примеры...")
                 
-                # Парсим созданный notebook
-                parsed = parse_notebook(filepath)
-                if parsed:
-                    # Генерируем критику
-                    critique = generate_critique(openai_client, critic_system_prompt, parsed['content'], detailed_query)
-                    if critique:
-                        print(f"  ✓ Критика сгенерирована")
-                    
-                    # Генерируем код-пример
-                    code_example = generate_code_example(openai_client, parsed['content'], detailed_query)
-                    if code_example:
-                        print(f"  ✓ Код-пример сгенерирован")
-                    
-                    # Добавляем в notebook
-                    if critique or code_example:
-                        if enhance_notebook(filepath, critique, code_example):
-                            print(f"  ✓ Notebook улучшен с критикой и кодом")
+                # Генерируем критику напрямую из explanation (без сохранения/загрузки)
+                critique = generate_critique(openai_client, critic_system_prompt, explanation, detailed_query)
+                if critique:
+                    print(f"  ✓ Критика сгенерирована")
+                
+                # Генерируем код-пример напрямую из explanation (без сохранения/загрузки)
+                code_example = generate_code_example(openai_client, explanation, detailed_query)
+                if code_example:
+                    print(f"  ✓ Код-пример сгенерирован")
+            
+            # Сохраняем полный notebook со всем содержимым за один раз
+            filepath = save_complete_notebook(output_dir, code, explanation, critique, code_example)
+            if filepath and use_critique:
+                print(f"  ✓ Notebook сохранен с критикой и кодом")
         else:
             print(f"✗ Не удалось сгенерировать объяснение для темы: {detailed_query}")
     
