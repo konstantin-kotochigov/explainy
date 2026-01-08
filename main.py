@@ -4,7 +4,7 @@
 
 Приложение:
 1. Читает список тем из файла topics.txt
-2. Читает системный промпт из файла system_prompt.txt
+2. Читает промпты из папки prompts/
 3. Генерирует объяснение для каждой темы используя OpenAI API
 4. Сохраняет каждое объяснение в отдельный Jupyter Notebook (.ipynb)
 """
@@ -81,14 +81,15 @@ def read_topics(filepath: str) -> list[dict]:
     return topics
 
 
-def generate_explanation(client: OpenAI, system_prompt: str, topic: str) -> str:
+def generate_explanation(client: OpenAI, system_prompt: str, user_prompt_template: str, topic: str) -> str:
     """Генерирует объяснение темы используя OpenAI API."""
     try:
+        user_prompt = user_prompt_template.format(topic=topic)
         response = client.chat.completions.create(
             model=PRIMARY_MODEL,
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Объясни следующую тему: {topic}"}
+                {"role": "user", "content": user_prompt}
             ],
             # service_tier="flex"
         )
@@ -288,22 +289,21 @@ def parse_notebook(filepath: Path) -> dict:
         return None
 
 
-def generate_critique(client: OpenAI, critic_system_prompt: str, content: str, topic: str) -> str | None:
+def generate_critique(client: OpenAI, critic_system_prompt: str, critic_user_prompt_template: str, content: str, topic: str) -> str | None:
     """
     Генерирует критику содержимого используя OpenAI API.
     
     Args:
         client: OpenAI клиент для вторичного LLM
         critic_system_prompt: Системный промпт для критика
+        critic_user_prompt_template: Шаблон пользовательского промпта для критики
         content: Содержимое для критики
         topic: Тема объяснения
         
     Returns:
         Текст критики или None в случае ошибки
     """
-    critique_prompt = f"""Проанализируй следующее объяснение темы "{topic}". Будь конкретным и конструктивным. Формат ответа - Markdown.
-Содержимое для анализа:
-{content}"""
+    critique_prompt = critic_user_prompt_template.format(topic=topic, content=content)
     
     try:
         response = client.chat.completions.create(
@@ -322,33 +322,27 @@ def generate_critique(client: OpenAI, critic_system_prompt: str, content: str, t
         return None
 
 
-def generate_code_example(client: OpenAI, content: str, topic: str) -> str | None:
+def generate_code_example(client: OpenAI, code_system_prompt: str, code_user_prompt_template: str, content: str, topic: str) -> str | None:
     """
     Генерирует Python код-пример используя OpenAI API.
     
     Args:
         client: OpenAI клиент для вторичного LLM
+        code_system_prompt: Системный промпт для генерации кода
+        code_user_prompt_template: Шаблон пользовательского промпта для генерации кода
         content: Содержимое объяснения
         topic: Тема объяснения
         
     Returns:
         Python код-пример или None в случае ошибки
     """
-    code_prompt = f"""На основе следующего объяснения темы "{topic}", создай один или несколько примеров на Python, которые проиллюстрировали бы основные концепции, описанные в документе.
-Если есть готовые реализации бибилотек на базе описываемой модель ии метод, отлично - покажи, как их применять. Если понятно, проще реализовать метод самому, ok, напиши нативный код.
-Важно, чтобы код иллюстрировал не абстрактную общую концепцию, а именно специфику данной темы - чтобы было видно отличия метода от его альтренатив.
-Не нужно пписать production-level код, достаточно пары простых игрушечных примеров.
-НЕ забудь добавить комментарии, объясняющие ключевые моменты.
-Верни ТОЛЬКО Python код с комментариями. Формат - Markdown.
-
-Содержимое объяснения:
-{content}"""
+    code_prompt = code_user_prompt_template.format(topic=topic, content=content)
     
     try:
         response = client.chat.completions.create(
             model=SECONDARY_MODEL,
             messages=[
-                {"role": "system", "content": "Ты эксперт Python программист, специализирующийся на AI/ML и Computer Science."},
+                {"role": "system", "content": code_system_prompt},
                 {"role": "user", "content": code_prompt}
             ],
             temperature=CODE_TEMPERATURE
@@ -442,17 +436,29 @@ def main():
     gemini_client = OpenAI(api_key=gemini_api_key, base_url="https://generativelanguage.googleapis.com/v1beta/openai/", timeout=GEMINI_API_TIMEOUT)
     openai_client = OpenAI(api_key=openai_api_key, timeout=OPENAI_API_TIMEOUT) if use_critique else None
     
-    # Читаем системный промпт
-    print("Читаем системный промпт...")
-    system_prompt = read_file('system_prompt.txt')
+    # Читаем промпты из папки prompts/
+    print("Читаем промпты...")
+    system_prompt = read_file('prompts/main_system_prompt.txt')
+    main_user_prompt_template = read_file('prompts/main_user_prompt.txt')
     print(f"✓ Системный промпт загружен ({len(system_prompt)} символов)")
+    print(f"✓ Пользовательский промпт загружен ({len(main_user_prompt_template)} символов)")
     
-    # Читаем системный промпт для критика (только если включена критика)
+    # Читаем промпты для критика и генерации кода (только если включена критика)
     critic_system_prompt = None
+    critic_user_prompt_template = None
+    code_system_prompt = None
+    code_user_prompt_template = None
+    
     if use_critique:
-        print("Читаем системный промпт для критика...")
-        critic_system_prompt = read_file('critic_system_prompt.txt')
+        print("Читаем промпты для критика и генерации кода...")
+        critic_system_prompt = read_file('prompts/critic_system_prompt.txt')
+        critic_user_prompt_template = read_file('prompts/critic_user_prompt.txt')
+        code_system_prompt = read_file('prompts/code_generation_system_prompt.txt')
+        code_user_prompt_template = read_file('prompts/code_generation_prompt.txt')
         print(f"✓ Системный промпт критика загружен ({len(critic_system_prompt)} символов)")
+        print(f"✓ Пользовательский промпт критика загружен ({len(critic_user_prompt_template)} символов)")
+        print(f"✓ Системный промпт генерации кода загружен ({len(code_system_prompt)} символов)")
+        print(f"✓ Пользовательский промпт генерации кода загружен ({len(code_user_prompt_template)} символов)")
     
     # Читаем список тем
     print("\nЧитаем список тем...")
@@ -478,7 +484,7 @@ def main():
         # Загружаем изображения для темы, используя кодовое имя и запрос на английском
         img_dir = download_images(code, image_query)
         
-        explanation = generate_explanation(gemini_client, system_prompt, detailed_query)
+        explanation = generate_explanation(gemini_client, system_prompt, main_user_prompt_template, detailed_query)
         
         if explanation:
             # Если включена критика, генерируем критику и код-примеры до сохранения
@@ -489,12 +495,12 @@ def main():
                 print(f"  Генерируем критику и код-примеры...")
                 
                 # Генерируем критику напрямую из explanation (без сохранения/загрузки)
-                critique = generate_critique(openai_client, critic_system_prompt, explanation, detailed_query)
+                critique = generate_critique(openai_client, critic_system_prompt, critic_user_prompt_template, explanation, detailed_query)
                 if critique:
                     print(f"  ✓ Критика сгенерирована")
                 
                 # Генерируем код-пример напрямую из explanation (без сохранения/загрузки)
-                code_example = generate_code_example(openai_client, explanation, detailed_query)
+                code_example = generate_code_example(openai_client, code_system_prompt, code_user_prompt_template, explanation, detailed_query)
                 if code_example:
                     print(f"  ✓ Код-пример сгенерирован")
             

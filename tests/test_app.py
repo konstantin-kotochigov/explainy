@@ -14,9 +14,9 @@ from main import read_file, read_topics
 
 def test_read_system_prompt():
     """Тест чтения системного промпта."""
-    print("Тест 1: Чтение system_prompt.txt")
+    print("Тест 1: Чтение prompts/main_system_prompt.txt")
     try:
-        content = read_file('system_prompt.txt')
+        content = read_file('prompts/main_system_prompt.txt')
         assert len(content) > 0, "Системный промпт пустой"
         assert "блога" in content.lower(), "Системный промпт не содержит ожидаемое содержание"
         print(f"  ✓ Системный промпт загружен: {len(content)} символов")
