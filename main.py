@@ -28,7 +28,6 @@ IMAGE_DOWNLOAD_TIMEOUT = 10  # 10 seconds per image download
 
 # Image search settings
 MAX_IMAGES_PER_QUERY = 10  # Maximum number of images to download per topic
-IMAGE_SIZE_FILTER = 'large'  # Image size filter for Google Custom Search
 
 # LLM model names
 PRIMARY_MODEL = "gemini-2.5-flash"  # Google Gemini model for main content
@@ -129,7 +128,6 @@ def download_images(code: str, image_query: str) -> str | None:
             'cx': search_engine_id,
             'q': image_query,
             'searchType': 'image',
-            'imgSize': IMAGE_SIZE_FILTER,  # Фильтр по размеру изображений
             'num': MAX_IMAGES_PER_QUERY  # Максимум изображений за запрос
         }
         
