@@ -500,8 +500,11 @@ def main():
             
             # Сохраняем полный notebook со всем содержимым за один раз
             filepath = save_complete_notebook(output_dir, code, explanation, critique, code_example)
-            if filepath and use_critique:
-                print(f"  ✓ Notebook сохранен с критикой и кодом")
+            if filepath:
+                if use_critique and (critique or code_example):
+                    print(f"  ✓ Notebook сохранен с критикой и кодом")
+                else:
+                    print(f"  ✓ Notebook сохранен")
         else:
             print(f"✗ Не удалось сгенерировать объяснение для темы: {detailed_query}")
     

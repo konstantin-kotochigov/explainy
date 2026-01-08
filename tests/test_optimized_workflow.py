@@ -48,7 +48,7 @@ DPR - это метод информационного поиска, котор�
 
 ## Преимущества
 
-- Семантический поиск ≈ понимание смысла
+- Семантический поиск - понимание смысла
 - Высокая точность
 - Быстрый инференс"""
         print("  ✓ Объяснение сгенерировано")
@@ -71,20 +71,24 @@ DPR - это метод информационного поиска, котор�
         # Шаг 3: Симуляция генерации кода (Secondary LLM)
         print("\n[3/4] Симуляция генерации кода с OpenAI...")
         code_example = """# Пример использования DPR с библиотекой transformers
-from transformers import DPRContextEncoder, DPRQuestionEncoder
+from transformers import DPRContextEncoder, DPRQuestionEncoder, DPRContextEncoderTokenizer, DPRQuestionEncoderTokenizer
 import torch
 
-# Инициализация энкодеров
+# Инициализация энкодеров и токенизаторов
 context_encoder = DPRContextEncoder.from_pretrained('facebook/dpr-ctx_encoder-single-nq-base')
+context_tokenizer = DPRContextEncoderTokenizer.from_pretrained('facebook/dpr-ctx_encoder-single-nq-base')
 question_encoder = DPRQuestionEncoder.from_pretrained('facebook/dpr-question_encoder-single-nq-base')
+question_tokenizer = DPRQuestionEncoderTokenizer.from_pretrained('facebook/dpr-question_encoder-single-nq-base')
 
 # Кодирование документов
 documents = ["Python - это язык программирования", "JavaScript используется для веба"]
-context_embeddings = context_encoder(**tokenizer(documents, return_tensors='pt')).pooler_output
+context_inputs = context_tokenizer(documents, return_tensors='pt', padding=True, truncation=True)
+context_embeddings = context_encoder(**context_inputs).pooler_output
 
 # Кодирование запроса
 query = "Что такое Python?"
-question_embedding = question_encoder(**tokenizer(query, return_tensors='pt')).pooler_output
+question_inputs = question_tokenizer(query, return_tensors='pt')
+question_embedding = question_encoder(**question_inputs).pooler_output
 
 # Вычисление сходства
 similarities = torch.matmul(question_embedding, context_embeddings.T)
