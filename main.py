@@ -38,6 +38,21 @@ CRITIQUE_TEMPERATURE = 0.2  # Temperature for critique generation
 CODE_TEMPERATURE = 0.2  # Temperature for code example generation
 
 
+def capitalize_first_letter(text: str) -> str:
+    """
+    Капитализирует первую букву строки.
+    
+    Args:
+        text: Строка для капитализации
+        
+    Returns:
+        Строка с заглавной первой буквой
+    """
+    if not text:
+        return text
+    return text[0].upper() + text[1:]
+
+
 def read_file(filepath: str) -> str:
     """Читает содержимое файла."""
     try:
@@ -144,8 +159,10 @@ def download_images(code: str, image_query: str, output_dir: Path) -> str | None
             print("  ⚠ Изображения не найдены")
             return None
         
-        # Создаем директорию для изображений по кодовому имени внутри outputs/img
-        img_dir = output_dir / 'img' / code
+        # Создаем директорию для изображений по кодовому имени внутри outputs/Img
+        # Капитализируем название директории и код темы
+        capitalized_code = capitalize_first_letter(code)
+        img_dir = output_dir / 'Img' / capitalized_code
         img_dir.mkdir(parents=True, exist_ok=True)
         
         # Загружаем изображения
@@ -192,7 +209,9 @@ def download_images(code: str, image_query: str, output_dir: Path) -> str | None
 
 def save_explanation(output_dir: Path, code: str, explanation: str):
     """Сохраняет объяснение в Jupyter Notebook."""
-    filename = f"{code}.ipynb"
+    # Капитализируем первую букву имени файла
+    capitalized_code = capitalize_first_letter(code)
+    filename = f"{capitalized_code}.ipynb"
     filepath = output_dir / filename
     
     try:
@@ -227,7 +246,9 @@ def save_complete_notebook(output_dir: Path, code: str, explanation: str, critiq
     Returns:
         Путь к сохраненному файлу или None в случае ошибки
     """
-    filename = f"{code}.ipynb"
+    # Капитализируем первую букву имени файла
+    capitalized_code = capitalize_first_letter(code)
+    filename = f"{capitalized_code}.ipynb"
     filepath = output_dir / filename
     
     try:
@@ -471,8 +492,8 @@ def main():
     output_dir = Path(output_dir_path)
     output_dir.mkdir(exist_ok=True)
     
-    # Создаем директорию для изображений внутри outputs
-    img_dir = output_dir / 'img'
+    # Создаем директорию для изображений внутри outputs (с заглавной буквы)
+    img_dir = output_dir / 'Img'
     img_dir.mkdir(exist_ok=True)
     
     print(f"✓ Директория для сохранения: {output_dir}")

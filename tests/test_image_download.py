@@ -30,14 +30,16 @@ def test_download_images_without_api_keys():
         del os.environ['GOOGLE_SEARCH_ENGINE_ID']
     
     try:
-        result = download_images("test_code", "test query")
-        
-        if result is None:
-            print("  ✓ Функция корректно возвращает None при отсутствии API ключей")
-            return True
-        else:
-            print(f"  ✗ Ожидался None, получено: {result}")
-            return False
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_dir = Path(tmpdir)
+            result = download_images("test_code", "test query", output_dir)
+            
+            if result is None:
+                print("  ✓ Функция корректно возвращает None при отсутствии API ключей")
+                return True
+            else:
+                print(f"  ✗ Ожидался None, получено: {result}")
+                return False
     finally:
         # Восстанавливаем старые значения
         if old_api_key:
@@ -88,7 +90,8 @@ def test_download_images_with_mock_api():
                     mock_get.side_effect = side_effect
                     
                     # Вызываем функцию
-                    result = download_images("ml", "machine learning")
+                    output_dir = Path(tmpdir)
+                    result = download_images("ml", "machine learning", output_dir)
                     
                     # Проверяем результат
                     if result is None:
@@ -160,13 +163,15 @@ def test_download_images_directory_structure():
                     # Тестируем с кодовым именем
                     code = "test_code"
                     image_query = "information retrieval diagram"
-                    result = download_images(code, image_query)
+                    output_dir = Path(tmpdir)
+                    result = download_images(code, image_query, output_dir)
                     
                     if result is None:
                         print("  ✗ Функция вернула None")
                         return False
                     
-                    expected_path = Path('outputs') / 'img' / code
+                    # Ожидаем капитализированные названия: 'Img' вместо 'img' и 'Test_code' вместо 'test_code'
+                    expected_path = output_dir / 'Img' / f"{code[0].upper()}{code[1:]}"
                     
                     if str(expected_path) != result:
                         print(f"  ✗ Неверный путь. Ожидалось: {expected_path}, получено: {result}")
