@@ -170,8 +170,10 @@ def test_download_images_directory_structure():
                         print("  ✗ Функция вернула None")
                         return False
                     
+                    # Импортируем функцию капитализации
+                    from main import capitalize_first_letter
                     # Ожидаем капитализированные названия: 'Img' вместо 'img' и 'Test_code' вместо 'test_code'
-                    expected_path = output_dir / 'Img' / f"{code[0].upper()}{code[1:]}"
+                    expected_path = output_dir / 'Img' / capitalize_first_letter(code)
                     
                     if str(expected_path) != result:
                         print(f"  ✗ Неверный путь. Ожидалось: {expected_path}, получено: {result}")

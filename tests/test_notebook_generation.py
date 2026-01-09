@@ -30,7 +30,8 @@ def test_notebook_generation():
         filepath = save_explanation(output_dir, code, explanation)
         
         # Проверяем, что файл создан с капитализированным именем
-        expected_filename = f"{code.capitalize()}.ipynb"
+        from main import capitalize_first_letter
+        expected_filename = f"{capitalize_first_letter(code)}.ipynb"
         expected_path = output_dir / expected_filename
         
         if not expected_path.exists():
@@ -152,6 +153,8 @@ def test_filename_generation():
     """Тест генерации имени файла для notebooks."""
     print("\nТест: Генерация имени файла для notebooks")
     
+    from main import capitalize_first_letter
+    
     with tempfile.TemporaryDirectory() as tmpdir:
         output_dir = Path(tmpdir)
         
@@ -162,8 +165,7 @@ def test_filename_generation():
         filepath = save_explanation(output_dir, code, explanation)
         
         # Проверяем, что файл создан с правильным именем (капитализированным)
-        # Функция capitalize_first_letter капитализирует только первую букву
-        expected_filename = f"{code[0].upper()}{code[1:]}.ipynb"
+        expected_filename = f"{capitalize_first_letter(code)}.ipynb"
         expected_path = output_dir / expected_filename
         
         if not expected_path.exists():

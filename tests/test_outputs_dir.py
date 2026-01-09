@@ -84,6 +84,11 @@ def test_custom_outputs_dir():
 def test_img_subdirectories():
     """Тест создания поддиректорий для изображений по темам."""
     print("\nТест 3: Проверка создания поддиректорий для изображений")
+    
+    # Импортируем функцию капитализации из main
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from main import capitalize_first_letter
+    
     try:
         # Используем директорию outputs по умолчанию
         output_dir = Path('outputs')
@@ -94,8 +99,8 @@ def test_img_subdirectories():
         
         # Создаем поддиректорию для конкретной темы (с заглавной буквы)
         topic_code = 'test_topic'
-        # Капитализируем первую букву имени поддиректории
-        capitalized_topic_code = topic_code[0].upper() + topic_code[1:]
+        # Используем функцию капитализации
+        capitalized_topic_code = capitalize_first_letter(topic_code)
         topic_img_dir = img_dir / capitalized_topic_code
         topic_img_dir.mkdir(parents=True, exist_ok=True)
         
