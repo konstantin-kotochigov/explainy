@@ -11,7 +11,7 @@ import nbformat
 # Добавляем путь к модулю
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from main import save_explanation
+from main import save_explanation, capitalize_first_letter
 
 
 def test_notebook_generation():
@@ -30,7 +30,6 @@ def test_notebook_generation():
         filepath = save_explanation(output_dir, code, explanation)
         
         # Проверяем, что файл создан с капитализированным именем
-        from main import capitalize_first_letter
         expected_filename = f"{capitalize_first_letter(code)}.ipynb"
         expected_path = output_dir / expected_filename
         
@@ -152,8 +151,6 @@ def test_notebook_enhancement():
 def test_filename_generation():
     """Тест генерации имени файла для notebooks."""
     print("\nТест: Генерация имени файла для notebooks")
-    
-    from main import capitalize_first_letter
     
     with tempfile.TemporaryDirectory() as tmpdir:
         output_dir = Path(tmpdir)

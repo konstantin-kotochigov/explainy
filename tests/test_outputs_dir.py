@@ -12,6 +12,8 @@ import shutil
 # Добавляем путь к модулю
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from main import capitalize_first_letter
+
 
 def test_default_outputs_dir():
     """Тест создания директории outputs по умолчанию."""
@@ -84,11 +86,6 @@ def test_custom_outputs_dir():
 def test_img_subdirectories():
     """Тест создания поддиректорий для изображений по темам."""
     print("\nТест 3: Проверка создания поддиректорий для изображений")
-    
-    # Импортируем функцию капитализации из main
-    sys.path.insert(0, str(Path(__file__).parent.parent))
-    from main import capitalize_first_letter
-    
     try:
         # Используем директорию outputs по умолчанию
         output_dir = Path('outputs')

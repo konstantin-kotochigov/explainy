@@ -13,7 +13,7 @@ import os
 # Добавляем путь к модулю
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from main import download_images
+from main import download_images, capitalize_first_letter
 
 
 def test_download_images_without_api_keys():
@@ -170,8 +170,6 @@ def test_download_images_directory_structure():
                         print("  ✗ Функция вернула None")
                         return False
                     
-                    # Импортируем функцию капитализации
-                    from main import capitalize_first_letter
                     # Ожидаем капитализированные названия: 'Img' вместо 'img' и 'Test_code' вместо 'test_code'
                     expected_path = output_dir / 'Img' / capitalize_first_letter(code)
                     
