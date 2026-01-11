@@ -238,6 +238,46 @@ def test_load_nonexistent_file():
         return True
 
 
+def test_status_validation():
+    """Тест валидации статусов."""
+    print("\n" + "=" * 80)
+    print("ТЕСТ 5: Валидация статусов")
+    print("=" * 80)
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        log_file = Path(tmpdir) / 'test.log'
+        results_data = {}
+        
+        print("\n[1/3] Валидация корректных статусов...")
+        success1 = log_processing(log_file, 'Test', 'model', 100, 'success')
+        success2 = log_processing(log_file, 'Test', 'model', 100, 'failed')
+        
+        if not success1 or not success2:
+            print("  ✗ ОШИБКА: корректные статусы отклонены")
+            return False
+        print("  ✓ Корректные статусы приняты")
+        
+        print("\n[2/3] Валидация некорректного статуса в log_processing...")
+        success3 = log_processing(log_file, 'Test', 'model', 100, 'invalid_status')
+        
+        if success3:
+            print("  ✗ ОШИБКА: некорректный статус принят")
+            return False
+        print("  ✓ Некорректный статус отклонен")
+        
+        print("\n[3/3] Валидация некорректного статуса в update_result...")
+        initial_count = len(results_data)
+        update_result(results_data, 'test', 'model', 'invalid_status')
+        
+        if len(results_data) != initial_count:
+            print("  ✗ ОШИБКА: некорректный статус добавлен в результаты")
+            return False
+        print("  ✓ Некорректный статус не добавлен в результаты")
+        
+        print("\n✓ ТЕСТ 5 ПРОЙДЕН")
+        return True
+
+
 def main():
     """Запуск всех тестов."""
     print("=" * 80)
@@ -249,6 +289,7 @@ def main():
         test_update_result,
         test_log_processing,
         test_load_nonexistent_file,
+        test_status_validation,
     ]
     
     results = [test() for test in tests]

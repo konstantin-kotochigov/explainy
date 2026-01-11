@@ -135,6 +135,11 @@ def update_result(results_data: dict, topic_code: str, model: str, status: str) 
         model: Используемая модель LLM
         status: Статус обработки ('success' или 'failed')
     """
+    # Валидация статуса
+    if status not in ('success', 'failed'):
+        print(f"Предупреждение: неверный статус '{status}', ожидается 'success' или 'failed'")
+        return
+    
     results_data[topic_code] = {
         'model': model,
         'status': status,
@@ -156,6 +161,11 @@ def log_processing(log_filepath: Union[str, Path], topic: str, model: str, token
     Returns:
         True если успешно, False в случае ошибки
     """
+    # Валидация статуса
+    if status not in ('success', 'failed'):
+        print(f"Предупреждение: неверный статус '{status}', ожидается 'success' или 'failed'")
+        return False
+    
     try:
         timestamp = datetime.now().isoformat()
         log_entry = f"{timestamp}\t{topic}\t{model}\t{tokens}\t{status}\n"
@@ -166,6 +176,7 @@ def log_processing(log_filepath: Union[str, Path], topic: str, model: str, token
     except Exception as e:
         print(f"Ошибка при записи в лог {log_filepath}: {e}")
         return False
+
 
 
 def generate_explanation(client: OpenAI, system_prompt: str, user_prompt_template: str, topic: str) -> tuple[str | None, int]:
