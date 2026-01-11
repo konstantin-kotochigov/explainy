@@ -64,7 +64,7 @@ def read_topics(filepath: str) -> list[dict]:
     topics = []
     for line_num, line in enumerate(content.split('\n'), start=1):
         line = line.strip()
-        if not line:
+        if not line or line.startswith('#'):
             continue
         
         parts = line.split(';')
