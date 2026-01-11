@@ -27,11 +27,11 @@ GOOGLE_SEARCH_TIMEOUT = 30  # 30 seconds for Google Custom Search API
 IMAGE_DOWNLOAD_TIMEOUT = 10  # 10 seconds per image download
 
 # Image search settings
-MAX_IMAGES_PER_QUERY = 5  # Maximum number of images to download per topic
+MAX_IMAGES_PER_QUERY = 1  # Maximum number of images to download per topic
 
 # LLM model names
-PRIMARY_MODEL = "gemini-2.5-flash"  # Google Gemini model for main content
-SECONDARY_MODEL = "gpt-4o-mini"  # OpenAI model for critique and code generation
+PRIMARY_MODEL = "gemini-3-preview"  # Google Gemini model for main content
+SECONDARY_MODEL = "gpt-4o"  # OpenAI model for critique and code generation
 
 # LLM generation parameters
 CRITIQUE_TEMPERATURE = 0.2  # Temperature for critique generation

@@ -1,24 +1,23 @@
-prf;Методы информационного поиска / метод Pseudo-Relevance Feedback (PRF);information retrieval Pseudo-Relevance Feedback PRF diagram
-realm;Методы информационного поиска / метод REALM;information retrieval REALM model architecture
-dpr;Методы информационного поиска / метод Deep Passage Retrieval (DPR);information retrieval Deep Passage Retrieval DPR diagram
-colbert;Методы информационного поиска / метод ColBERT (2020);information retrieval ColBERT architecture diagram
-dpr_ctl;Методы информационного поиска / метод DPR-CTL (2020);information retrieval DPR-CTL model
-rag;Методы информационного поиска / метод RAG (2020);information retrieval RAG Retrieval Augmented Generation
-exaranker;Методы информационного поиска / метод ExaRanker (2023);information retrieval ExaRanker model
-conqrr;Методы информационного поиска / метод CONQRR (2022);information retrieval CONQRR model
-contextual_clues;Методы информационного поиска / метод Contextual Clues Sampling (2022);information retrieval Contextual Clues Sampling
-deepretrieval;Методы информационного поиска / метод DeepRetrieval (2025);information retrieval DeepRetrieval model
-search_r1;Методы информационного поиска / метод Search-R1 (2025);information retrieval Search-R1 model
-s3;Методы информационного поиска / метод S3;information retrieval S3 model
-graphrag;Методы информационного поиска / метод GraphRAG (2024);information retrieval GraphRAG architecture
-lightrag;Методы информационного поиска / метод LightRAG (2024);information retrieval LightRAG model
-pathrag;Методы информационного поиска / метод PathRAG (2025);information retrieval PathRAG architecture
-splade;Методы информационного поиска / метод SPLADE (2021);information retrieval SPLADE model diagram
-splade_plus;Методы информационного поиска / метод SPLADE++ (2021);information retrieval SPLADE++ model
-coil;Методы информационного поиска / метод COIL (2021);information retrieval COIL model architecture
-unicoil;Методы информационного поиска / метод uniCOIL (2022);information retrieval uniCOIL model
-deepimpact;Методы информационного поиска / метод DeepImpact;information retrieval DeepImpact model
-deepct;Методы информационного поиска / метод DeepCT;information retrieval DeepCT model
-tilde;Методы информационного поиска / метод TILDE;information retrieval TILDE model architecture
-doc2query;Методы информационного поиска / метод Doc2Query (2019);information retrieval Doc2Query model
-e5;Методы информационного поиска / метод E5;information retrieval E5 embeddings model
+prf;Метод информационного поиска Pseudo-Relevance Feedback (PRF);Pseudo-Relevance Feedback (PRF) diagram
+dpr;Метод информационного поиска Deep Passage Retrieval (DPR);Deep Passage Retrieval (DPR) diagram
+colbert;Метод информационного поиска ColBERT (2020);ColBERT diagram
+dpr_ctl;Метод информационного поиска DPR-CTL (2020);DPR-CTL model
+rag;Метод информационного поиска RAG (2020);RAG Retrieval Augmented Generation
+exaranker;Метод информационного поиска ExaRanker (2023);ExaRanker model
+conqrr;Метод информационного поиска CONQRR (2022);CONQRR model
+deepretrieval;Метод информационного поиска DeepRetrieval (2025);DeepRetrieval model
+search_r1;Метод информационного поиска Search-R1 (2025);Search-R1 model
+s3;Метод информационного поиска S3 (Search, Select, Serve);Search, Serve (S3) model diagram
+graphrag;Метод информационного поиска GraphRAG (2024);GraphRAG architecture
+lightrag;Метод информационного поиска LightRAG (2024);LightRAG model
+pathrag;Метод информационного поиска PathRAG (2025);PathRAG architecture
+splade;Метод информационного поиска / SPLADE (2021);SPLADE model diagram
+splade_plus;Метод информационного поиска SPLADE++ (2021);SPLADE++ model
+coil;Метод информационного поиска COIL (2021);COIL model architecture
+unicoil;Метод информационного поиска uniCOIL (2022);uniCOIL model
+deepimpact;Метод информационного поиска DeepImpact;DeepImpact model
+deepct;Метод информационного поиска DeepCT;DeepCT model
+tilde;Метод информационного поиска TILDE;TILDE model architecture
+doc2query;Метод информационного поиска Doc2Query (2019);Doc2Query model
+e5;Методы информационного поиска E5;E5 embeddings diagram
+BYOL;Метод самообучения BYOL;byol learning diagram 
