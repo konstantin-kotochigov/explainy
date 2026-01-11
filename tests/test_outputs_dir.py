@@ -12,6 +12,8 @@ import shutil
 # Добавляем путь к модулю
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from main import capitalize_first_letter
+
 
 def test_default_outputs_dir():
     """Тест создания директории outputs по умолчанию."""
@@ -28,13 +30,13 @@ def test_default_outputs_dir():
         output_dir = Path(output_dir_path)
         output_dir.mkdir(exist_ok=True)
         
-        # Создаем директорию для изображений
-        img_dir = output_dir / 'img'
+        # Создаем директорию для изображений (с заглавной буквы)
+        img_dir = output_dir / 'Img'
         img_dir.mkdir(exist_ok=True)
         
         assert output_dir.exists(), "Директория outputs не создана"
-        assert img_dir.exists(), "Директория outputs/img не создана"
-        assert img_dir.is_dir(), "outputs/img не является директорией"
+        assert img_dir.exists(), "Директория outputs/Img не создана"
+        assert img_dir.is_dir(), "outputs/Img не является директорией"
         
         print(f"  ✓ Директория создана: {output_dir.absolute()}")
         print(f"  ✓ Директория изображений создана: {img_dir.absolute()}")
@@ -62,13 +64,13 @@ def test_custom_outputs_dir():
             output_dir = Path(output_dir_path)
             output_dir.mkdir(exist_ok=True)
             
-            # Создаем директорию для изображений
-            img_dir = output_dir / 'img'
+            # Создаем директорию для изображений (с заглавной буквы)
+            img_dir = output_dir / 'Img'
             img_dir.mkdir(exist_ok=True)
             
             assert output_dir.exists(), "Кастомная директория outputs не создана"
-            assert img_dir.exists(), "Директория img внутри кастомной директории не создана"
-            assert img_dir.is_dir(), "img не является директорией"
+            assert img_dir.exists(), "Директория Img внутри кастомной директории не создана"
+            assert img_dir.is_dir(), "Img не является директорией"
             
             print(f"  ✓ Кастомная директория создана: {output_dir.absolute()}")
             print(f"  ✓ Директория изображений создана: {img_dir.absolute()}")
@@ -89,12 +91,14 @@ def test_img_subdirectories():
         output_dir = Path('outputs')
         output_dir.mkdir(exist_ok=True)
         
-        img_dir = output_dir / 'img'
+        img_dir = output_dir / 'Img'
         img_dir.mkdir(exist_ok=True)
         
-        # Создаем поддиректорию для конкретной темы
+        # Создаем поддиректорию для конкретной темы (с заглавной буквы)
         topic_code = 'test_topic'
-        topic_img_dir = img_dir / topic_code
+        # Используем функцию капитализации
+        capitalized_topic_code = capitalize_first_letter(topic_code)
+        topic_img_dir = img_dir / capitalized_topic_code
         topic_img_dir.mkdir(parents=True, exist_ok=True)
         
         assert topic_img_dir.exists(), f"Директория {topic_img_dir} не создана"
