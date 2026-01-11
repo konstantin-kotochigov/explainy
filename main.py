@@ -17,6 +17,8 @@ from dotenv import load_dotenv
 import nbformat
 from nbformat.v4 import new_notebook, new_markdown_cell, new_code_cell
 import requests
+import json
+from datetime import datetime
 
 
 # Configuration Constants
@@ -81,8 +83,97 @@ def read_topics(filepath: str) -> list[dict]:
     return topics
 
 
-def generate_explanation(client: OpenAI, system_prompt: str, user_prompt_template: str, topic: str) -> str:
-    """Генерирует объяснение темы используя OpenAI API."""
+def save_results(filepath: str, results_data: dict) -> bool:
+    """
+    Сохраняет результаты обработки тем в JSON файл (режим перезаписи).
+    
+    Args:
+        filepath: Путь к файлу результатов
+        results_data: Словарь с результатами обработки тем.
+                     Формат: {topic_code: {model, status, last_updated}}
+    
+    Returns:
+        True если успешно, False в случае ошибки
+    """
+    try:
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(results_data, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as e:
+        print(f"Ошибка при сохранении результатов в {filepath}: {e}")
+        return False
+
+
+def load_results(filepath: str) -> dict:
+    """
+    Загружает результаты обработки тем из JSON файла.
+    
+    Args:
+        filepath: Путь к файлу результатов
+    
+    Returns:
+        Словарь с результатами или пустой словарь, если файл не существует
+    """
+    try:
+        if Path(filepath).exists():
+            with open(filepath, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return {}
+    except Exception as e:
+        print(f"Ошибка при загрузке результатов из {filepath}: {e}")
+        return {}
+
+
+def update_result(results_data: dict, topic_code: str, model: str, status: str) -> None:
+    """
+    Обновляет информацию о результате обработки темы.
+    
+    Args:
+        results_data: Словарь с результатами обработки
+        topic_code: Код темы
+        model: Используемая модель LLM
+        status: Статус обработки ('success' или 'failed')
+    """
+    results_data[topic_code] = {
+        'model': model,
+        'status': status,
+        'last_updated': datetime.now().isoformat()
+    }
+
+
+def log_processing(log_filepath: str, topic: str, model: str, tokens: int, status: str) -> bool:
+    """
+    Логирует информацию о процессе обработки темы (режим добавления).
+    
+    Args:
+        log_filepath: Путь к файлу логов
+        topic: Тема обработки
+        model: Используемая модель LLM
+        tokens: Количество использованных токенов
+        status: Статус обработки ('success' или 'failed')
+    
+    Returns:
+        True если успешно, False в случае ошибки
+    """
+    try:
+        timestamp = datetime.now().isoformat()
+        log_entry = f"{timestamp}\t{topic}\t{model}\t{tokens}\t{status}\n"
+        
+        with open(log_filepath, 'a', encoding='utf-8') as f:
+            f.write(log_entry)
+        return True
+    except Exception as e:
+        print(f"Ошибка при записи в лог {log_filepath}: {e}")
+        return False
+
+
+def generate_explanation(client: OpenAI, system_prompt: str, user_prompt_template: str, topic: str) -> tuple[str | None, int]:
+    """
+    Генерирует объяснение темы используя OpenAI API.
+    
+    Returns:
+        Tuple of (explanation, token_count) или (None, 0) в случае ошибки
+    """
     try:
         user_prompt = user_prompt_template.format(topic=topic)
         response = client.chat.completions.create(
@@ -94,12 +185,13 @@ def generate_explanation(client: OpenAI, system_prompt: str, user_prompt_templat
             # service_tier="flex"
         )
         if response.choices and len(response.choices) > 0:
-            print("total tokens processed = {}".format(response.usage.total_tokens))
-            return response.choices[0].message.content
-        return None
+            tokens = response.usage.total_tokens
+            print("total tokens processed = {}".format(tokens))
+            return response.choices[0].message.content, tokens
+        return None, 0
     except Exception as e:
         print(f"Ошибка при генерации объяснения для темы '{topic}': {e}")
-        return None
+        return None, 0
 
 
 def download_images(code: str, image_query: str, output_dir: Path) -> str | None:
@@ -478,6 +570,16 @@ def main():
     print(f"✓ Директория для сохранения: {output_dir}")
     print(f"✓ Директория для изображений: {img_dir}")
     
+    # Инициализируем файлы для результатов и логов
+    results_filepath = output_dir / 'results.json'
+    log_filepath = output_dir / 'processing.log'
+    
+    # Загружаем существующие результаты
+    results_data = load_results(results_filepath)
+    
+    print(f"✓ Файл результатов: {results_filepath}")
+    print(f"✓ Файл логов: {log_filepath}")
+    
     # Генерируем объяснения для каждой темы
     print(f"\nГенерация объяснений для {len(topics)} тем:")
     print("-" * 80)
@@ -492,7 +594,7 @@ def main():
         # Загружаем изображения для темы, используя кодовое имя и запрос на английском
         img_dir = download_images(code, image_query, output_dir)
         
-        explanation = generate_explanation(gemini_client, system_prompt, main_user_prompt_template, detailed_query)
+        explanation, tokens = generate_explanation(gemini_client, system_prompt, main_user_prompt_template, detailed_query)
         
         if explanation:
             # Если включена критика, генерируем критику и код-примеры до сохранения
@@ -519,8 +621,22 @@ def main():
                     print(f"  ✓ Notebook сохранен с критикой и кодом")
                 else:
                     print(f"  ✓ Notebook сохранен")
+                
+                # Обновляем результаты и логируем успешную обработку
+                update_result(results_data, code, PRIMARY_MODEL, 'success')
+                log_processing(log_filepath, detailed_query, PRIMARY_MODEL, tokens, 'success')
+            else:
+                # Логируем неудачу при сохранении
+                update_result(results_data, code, PRIMARY_MODEL, 'failed')
+                log_processing(log_filepath, detailed_query, PRIMARY_MODEL, tokens, 'failed')
         else:
             print(f"✗ Не удалось сгенерировать объяснение для темы: {detailed_query}")
+            # Логируем неудачу при генерации
+            update_result(results_data, code, PRIMARY_MODEL, 'failed')
+            log_processing(log_filepath, detailed_query, PRIMARY_MODEL, 0, 'failed')
+    
+    # Сохраняем обновленные результаты
+    save_results(results_filepath, results_data)
     
     print("\n" + "=" * 80)
     print(f"✓ Завершено! Обработано тем: {len(topics)}")
