@@ -12,6 +12,7 @@
 import os
 import sys
 from pathlib import Path
+from typing import Union
 from openai import OpenAI
 from dotenv import load_dotenv
 import nbformat
@@ -83,7 +84,7 @@ def read_topics(filepath: str) -> list[dict]:
     return topics
 
 
-def save_results(filepath: str, results_data: dict) -> bool:
+def save_results(filepath: Union[str, Path], results_data: dict) -> bool:
     """
     Сохраняет результаты обработки тем в JSON файл (режим перезаписи).
     
@@ -104,7 +105,7 @@ def save_results(filepath: str, results_data: dict) -> bool:
         return False
 
 
-def load_results(filepath: str) -> dict:
+def load_results(filepath: Union[str, Path]) -> dict:
     """
     Загружает результаты обработки тем из JSON файла.
     
@@ -141,7 +142,7 @@ def update_result(results_data: dict, topic_code: str, model: str, status: str) 
     }
 
 
-def log_processing(log_filepath: str, topic: str, model: str, tokens: int, status: str) -> bool:
+def log_processing(log_filepath: Union[str, Path], topic: str, model: str, tokens: int, status: str) -> bool:
     """
     Логирует информацию о процессе обработки темы (режим добавления).
     
