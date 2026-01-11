@@ -11,7 +11,7 @@
 import os
 import sys
 from pathlib import Path
-from typing import Union, Optional
+from typing import Union, Optional, List
 import asyncio
 import logging
 from datetime import datetime
@@ -91,7 +91,7 @@ def convert_notebook_to_markdown(notebook_path: Union[str, Path]) -> Optional[st
         raise ValueError(error_msg) from e
 
 
-def split_message(text: str, max_length: int = MAX_MESSAGE_LENGTH) -> list[str]:
+def split_message(text: str, max_length: int = MAX_MESSAGE_LENGTH) -> List[str]:
     """
     Разбивает длинный текст на части для отправки в Telegram.
     
@@ -123,11 +123,12 @@ def split_message(text: str, max_length: int = MAX_MESSAGE_LENGTH) -> list[str]:
                         if len(current_part) + len(word) + 1 > max_length:
                             if current_part:
                                 parts.append(current_part)
-                                current_part = word
-                            else:
-                                # Слово слишком длинное, разбиваем его
+                                current_part = ""
+                            # Слово слишком длинное, разбиваем его на части
+                            while len(word) > max_length:
                                 parts.append(word[:max_length])
-                                current_part = word[max_length:]
+                                word = word[max_length:]
+                            current_part = word
                         else:
                             current_part += (' ' if current_part else '') + word
                 else:
@@ -190,12 +191,11 @@ async def send_to_telegram_async(
         # Отправляем каждую часть
         for i, part in enumerate(parts, 1):
             try:
-                # Добавляем заголовок для составных сообщений
+                message_to_send = part
+                # Добавляем заголовок для составных сообщений (без форматирования, чтобы избежать проблем с экранированием)
                 if len(parts) > 1:
-                    header = f"*Часть {i}/{len(parts)}*\n\n"
+                    header = f"[Часть {i}/{len(parts)}]\n\n"
                     message_to_send = header + part
-                else:
-                    message_to_send = part
                 
                 await bot.send_message(
                     chat_id=channel_id,
@@ -211,9 +211,17 @@ async def send_to_telegram_async(
             except TelegramError as e:
                 logger.error(f"Ошибка при отправке части {i}/{len(parts)}: {e}")
                 # Если ошибка парсинга, пробуем отправить без форматирования
-                if "can't parse" in str(e).lower():
+                # Проверяем тип ошибки через атрибуты исключения
+                error_message = str(e).lower()
+                is_parse_error = ("can't parse" in error_message or 
+                                "parse" in error_message or 
+                                "markdown" in error_message or
+                                "entities" in error_message)
+                
+                if is_parse_error:
                     logger.info("Повторная попытка отправки без форматирования")
                     try:
+                        # Убираем заголовок и отправляем только основной контент
                         await bot.send_message(
                             chat_id=channel_id,
                             text=part,
