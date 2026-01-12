@@ -30,7 +30,7 @@ IMAGE_DOWNLOAD_TIMEOUT = 10  # 10 seconds per image download
 MAX_IMAGES_PER_QUERY = 1  # Maximum number of images to download per topic
 
 # LLM model names
-PRIMARY_MODEL = "gemini-3-preview"  # Google Gemini model for main content
+PRIMARY_MODEL = "gemini-3-flash-preview"  # Google Gemini model for main content
 SECONDARY_MODEL = "gpt-4o"  # OpenAI model for critique and code generation
 
 # LLM generation parameters
