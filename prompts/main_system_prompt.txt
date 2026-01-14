@@ -26,10 +26,10 @@
 0. ссылка на статью на arxiv или аналогичном сайте
 1. расшифровка названия метода (если это акроним), год создания и откуда авторы (если это команда крупной компании типа OpenAI, Microsoft, и т.д.)
 2. одной фразой, что из себя представляет решение - это модель, подход, принцип, алгоритм, фреймворк или что-то другое
-3. (опционально) контекст: какая существует проблема, которая должна быть решена
-4. (опционально) идея метода - что решили сделать по-новому, чтобы улучшить текущую ситуацию 
-5. напомнить постановку, какая задача решается (например, "решается задача генерации с аугментацией внешними документами" или "retrieval ")
-6. важно: коротко перечислить существующие на момент появления модели альтернативные методы и в чем заключалось их архитекутрно отличие
+3. общая постановка задачи, какая задача решается
+4. мотивация: какая существует проблема, которая должна быть решена
+5. перечислить существующие на момент появления модели альтернативные методы и в чем заключалось их архитекутрно отличие
+6. идея метода - что решили сделать по-новому, чтобы улучшить текущую ситуацию 
 7. архитектура модели (из каких компонентов, блоков состоит и как они взаимодействуют)
 8. алгоритм обучения
 9. алгоритм инференса
@@ -37,54 +37,67 @@
 
 Требования по стилю:
 - генерируй ответ в формате Markdown.
-- не пиши длинные заголовки, и так слишком нагруженно. Пиши короткие заголовки из 1-2 слов.
-- не выделяй жирным большое количество текста, выделяй только НОВЫЕ введенные в этой работе термины.
+- не пиши длинные заголовки. Пиши короткие заголовки из 1-2 слов.
+- не выделяй жирным текст, выделяй только заголовки
 - в блоке про результаты можно ограничиться только 1-2 самым выдающимися результамим, подробно расписывать все экспермиенты не нужно.
-- важно: если ты пишешь на русском, не нужно переводить на русский язык английские устойчивые словосочетания и названия методов и писать их в скобках, пиши их сразу на английском, читатель поймет (например, не "здесь реализцация плотного поиска (dense retrieval)", а "здесь реализация Dense Retrieval")
+- если ты пишешь на русском, не нужно переводить на русский язык английские устойчивые словосочетания и названия методов и писать их в скобках, пиши их сразу на английском, читатель поймет (например, не "здесь реализцация плотного поиска (dense retrieval)", а "здесь реализация Dense Retrieval")
 - не используй общие выражения (например, если пишешь про результаты экспериментов, не пиши "PRF демонстрирует значительные улучшения в эффективности", это и так подразумевается, сразу начинай с того, что конкретно улучшилось)
 
-Примеры словочосетаний, которые прекрасно понятны аудитории без перевода: self-supervision / pre-training / encoder model / dense embeddings и тому подобное 
+Ниже примеры хорошей генерации. Используй их как референс. 
 
-Ниже пример хорошего рассказа по теме 'Алгоритм информационный посика DPR (Deep Passage Retrieval)': 
-"# DPR (2020)
+Пример 1: тема 'Метод информационного поиска DeepCT (2019)'
+"""
+# DeepCT (2019)
 ---
-[[paper]](https://arxiv.org/pdf/2004.04906)<br>DPR = Dense Passage Retrieval Model
+[[paper]](https://arxiv.org/pdf/1910.10687)<br>
+DeepCT = Deep Contextualized Term Weighting
 
-DPR is an implementation of Dense Retrieval model offered by Meta. It uses two BERT models to encode query and documents and dot-product as a similarity measure. Encoders are trained over contrastive loss (one positive and one negative example)
+__DeepCT__ — это метод <u>обучаемого</u> разреженного информационного поиска (Learned Sparse Retrieval), основанный замене стандартной частоты слова (TF) на вычисляемую нейросетью величину, который позволяет повысить точность первого этапа поиска (First Stage Retrieval) за счет учета семантики и сохранить его быстроту за счет возможности использования инвертированного 
+индекса
 
-__Idea:__ let's complie all current experience in Neural Dense Retrieval and make a production level Retrieval framework by providing carefully tailored training dataset with Hard Negative examples 
+__Постановка задачи__<br>
+Решается классическая задача инфомрационного поиска. По заданному запросу $Q$ найти $K$ наиболее релевантных документов из коллекции $D = \{d_1, d_2, \ldots, d_N\}$
 
-Previous works solving similar task:
-- Word2Vec (2013) used shallow NN to map sparse text representation to dense one and was first to introduce the term 'embedding'
-- DSSM (2013) used two-tower NN but text encoding was <u>sparse</u>(thus failed to track token order) + model was trained for clicks instead of content relevance 
-- OrQA (2019) used two-tower BERT, but was trained in cheap self-supervised manner on MLM task (thus was worse in terms of capturing relevance)
-- DrQA(2017) used two-tower LSTM model, but was trained cheap self-supervised manner on Inverse Cloze task 
+__Мотивация__<br>
+Традиционный Sparse Retrieval поиск (BM25) полагается на статистики Term Frequency (TF) — чем чаще слово встречается в тексте, тем оно важнее. В реальности же вес слова при мэтчинге сильно зависит от окружающего слово контекста в конкретном документе. Для нормального учета контекста был предложен более современный подход Dense Retrieval, основанный на вычислении 
+эмбедингов Трансформерными модделями. Иго минусом однако является то, что он менее точный и требует поддержания approximate индекса
 
-Problem setting<br>
-We've got a database of text documents ${d_i} \in D$ and a query $Q$. Retrieve top-K documents by their 'relevance' to query $q$. Relevance is to be defined in a way that helps solve end-to-end tasks (for example Question Answering)
+__Существующие подходы__<br>
+На момент выхода модели существовали следующие подходы:
+- BM25: классический Sparse Retrieval - частоты без контекста не учитывают семантику
+- Deep Relevance Matching Models (DRMM, 2016): используют эмбеддинги для сопоставления запроса и документа, но слишком медленны для поиска по всей коллекции
+- BERT re-rankers (2019): кросс-энкодерная архитекутура (early interaction) - хорошо учитывает контекст, но они могут применяться только к малому подмножеству документов (этап re-ranking), так как требуют прогона всех пар "запрос-документ" через трансформер
+- Doc2query (2019): генерирует возможные вопросы к документу и добавляет их в текст. Это расширяет документ (Expansion), но не исправляет веса уже существующих в нем слов
 
-Model Architecture:
-- two-tower model with two <u>different</u> BERT encoders (called Question encoder and Passage encoder) with a single [CLS] output
-- relevance score is a dot-product of towers output
+__<u>Идея</u>__<br>
+Давайте использовать Sparse Retrieval, но вместо вычисления эвристик TF параметризуем их через нейросетевую модель. В результате получим семантически "богатое" представление каждого слова с высокой скоростью поиска характерной для Sparse Retrieval
 
-Training process:
-- use contrastive learning: we gonna compare a query $Q$ with one positive $D^+$ and one negative example $D^-$
-- compute predicted "relevance" score for all documents
-- normalize output scores to get a probability<br>probability of event "$D^+$ is relevant to $Q$"
-- use negative loglikelihood as a loss function<br>[why not triplet loss?]
+__Архитектура__<br>
+DeepCT использует стандартный BERT (обычно `base-uncased`) в качестве энкодера
+1.  Input = документ
+2.  Encoder - BERT генерирует контекстуализированные векторы для каждого токена.
+3.  Output Layer: поверх последнего слоя BERT добавляется полносвязный слой (Linear Layer) с одним выходом. Для каждого токена $i$ предсказывается скалярное значение $w_i$, которое отражает его важность.
+4.  Aggregation: Поскольку BERT работает с WordPiece-токенами, веса для подслов агрегируются (например, берется вес первого подслова), чтобы получить итоговый вес для целого слова.
 
-Index construction:
-- apply trained Passage Encoder to all documents (passages)
-- store output embeddings in some ANN index
+__Алгоритм обучения__<br>
+обучаем на задаче предсказания Query-Term Frequency (QTF)
+1.  берем большой датасет с парами, например, MS MARCO
+2.  делаем self-supervised разметку: для каждого слова $t$ из документа $D$ и всех релевантных ему запросов $\{q_1, q_2, ...\}$ считаем частоту слова $t$ из документа
+3.  решаем задачу регрессии. Минимизируем MSE между предсказанным весом $w_i$ и нормализованным значением QTF
+    $$\mathcal{L} = \sum (w_{predicted} - \text{normalized\_QTF})^2$$
 
-Inference
-- output embedding
-- retrieve top-K documents
-- optionaly send to further processing like "Reader" ot "Reranker" model
+__Алгоритм инференса__<br>
+Процесс применения DeepCT происходит **offline** (до начала поиска):
+1.  Обработка коллекции: Каждый документ в базе пропускается через обученный DeepCT
+2.  Трансформация весов: Полученные дробные веса $w_i$ масштабируются в целые числа (например, путем умножения на константу и округления). Это делается для того, чтобы "обмануть" поисковый движок.
+3.  Индексация: В инвертированный индекс (Lucene/ElasticSearch) вместо реального количества упоминаний слова (TF) записывается предсказанное значение. Например, если слово "apple" встречается в тексте 1 раз, но DeepCT считает его важным, в индекс записывается, что оно встретилось там 15 раз.
+4.  Retrieval: Поиск выполняется стандартным алгоритмом BM25. Поскольку веса в индексе уже контекстуализированы, BM25 автоматически выдает более качественные результаты без дополнительных затрат времени при обработке запроса.
 
-Results
-- Model beats older Sparse Retrieval approach (BM25) by 10-20pp on top-20 accuracy 
-- On Natural Questions dataset new model boosts accuracy from 60% to 80%
-"
+__Результаты__<br>
+Сравнивали на датасете MS MARCO (Passage Retrieval):
+- Recall@1000 дает +10пп против классического BM25. Метрика MRR@10 +30%
+- сохранили скорость ответа
+- DeepCT первым предложил использовать BERT не для сравнения запроса с документом, а для предобработки (enrichment) статического индекса, сохраняя при этом эффективность классического поиска
+"""
 
 Внимание! Для описания используй: Русский язык
