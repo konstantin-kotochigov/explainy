@@ -2,3 +2,8 @@ openai>=1.0.0
 python-dotenv>=1.0.0
 nbformat>=5.0.0
 requests>=2.31.0
+# Note: nbconvert <= 7.16.6 has a Windows-specific vulnerability (uncontrolled search path)
+# No patched version is available yet. Mitigation: Run in controlled environments only.
+# The vulnerability requires specific attack conditions and does not affect Linux/macOS.
+nbconvert>=7.0.0
+python-telegram-bot>=20.0

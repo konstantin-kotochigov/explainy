@@ -171,6 +171,7 @@ python main.py
 ```
 explainy/
 ├── main.py                         # Основной скрипт приложения с двумя LLM
+├── telegram_publisher.py           # Модуль для публикации notebooks в Telegram
 ├── topics.txt                      # Список тем для объяснения
 ├── prompts/                        # Папка с промптами для LLM
 │   ├── README.md                   # Документация по промптам
@@ -190,6 +191,7 @@ explainy/
 │   ├── test_image_download.py      # Тесты загрузки изображений
 │   ├── test_outputs_dir.py         # Тесты параметризации директории outputs
 │   ├── test_logging_and_results.py # Тесты логирования и сохранения результатов
+│   ├── test_telegram_publisher.py  # Тесты модуля публикации в Telegram
 │   └── demo_logging_and_results.py # Демонстрация логирования и результатов
 ├── outputs/                        # Директория с сгенерированными объяснениями (создается автоматически)
 │   ├── img/                        # Директория с загруженными изображениями
@@ -199,6 +201,59 @@ explainy/
 ```
 
 ## Конфигурация
+
+### Публикация в Telegram
+
+Приложение включает модуль `telegram_publisher.py` для публикации сгенерированных Jupyter Notebooks в Telegram канал.
+
+**Возможности:**
+- Конвертация `.ipynb` файлов в Markdown формат
+- Автоматическая отправка контента в Telegram канал через Bot API
+- Разбиение длинных сообщений на части (Telegram лимит: 4096 символов)
+- Обработка ошибок и детальное логирование
+
+**Настройка:**
+
+1. Создайте Telegram бота через [@BotFather](https://t.me/BotFather):
+   - Отправьте `/newbot` и следуйте инструкциям
+   - Сохраните полученный токен бота
+
+2. Создайте Telegram канал или используйте существующий:
+   - Добавьте вашего бота в канал как администратора
+   - Получите ID канала (например, `@channel_name` или числовой ID `-1001234567890`)
+
+3. Добавьте учетные данные в файл `.env`:
+   ```bash
+   TELEGRAM_BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz
+   TELEGRAM_CHANNEL_ID=@your_channel_name
+   ```
+
+**Использование:**
+
+```bash
+# Публикация одного notebook
+python telegram_publisher.py outputs/dpr.ipynb
+
+# Или через Python код
+from telegram_publisher import publish_notebook_to_telegram
+
+# Используя переменные окружения из .env
+publish_notebook_to_telegram('outputs/dpr.ipynb')
+
+# Или с явным указанием параметров
+publish_notebook_to_telegram(
+    'outputs/dpr.ipynb',
+    bot_token='your_bot_token',
+    channel_id='@your_channel'
+)
+```
+
+**Примечание**: Модуль автоматически обрабатывает:
+- Конвертацию markdown и code ячеек в читаемый формат
+- Разбиение длинных сообщений на части
+- Повторные попытки отправки при ошибках парсинга форматирования
+
+**Безопасность**: `nbconvert` имеет известную уязвимость (uncontrolled search path) на Windows. Патч пока не доступен. Рекомендуется запускать в контролируемых окружениях. Уязвимость не влияет на Linux/macOS.
 
 ### Файл topics.txt
 Содержит список тем для объяснения в формате: `code;detailed_query;image_query`
